@@ -1,2 +1,2 @@
-# formulas
-My own programed formulas
+# Formulas
+My own python formulas
