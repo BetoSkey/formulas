@@ -7,6 +7,7 @@ class DatosEstadisticos:
 
     def __init__(self, datos, titulo, agrupados=False, columna_xi=0, columna_fa=0, xi_es_index=False, muestra=True):
         
+
         if type(datos) == list:
             self.datos = pandas.DataFrame(datos)
 
@@ -26,6 +27,10 @@ class DatosEstadisticos:
         nombre_columnas = self.__obtener_nombre_columnas__()
         self.nombre_columna_xi = nombre_columnas['xi']
         self.nombre_columna_fa = nombre_columnas['fa']
+
+        datos_xi_ni = self.__obtener_datos_ni_xi__()
+        self.xi = datos_xi_ni[0]
+        self.fa = datos_xi_ni[1]
 
         self.__ordenar_datos__()
 
@@ -78,7 +83,31 @@ class DatosEstadisticos:
             columna_fa_name = self.datos.iloc[:,self.columna_fa].name
 
         return {'xi':columna_xi_name, 'fa':columna_fa_name}    
-    
+   
+    def __total_n__(self):
+
+        if self.agrupados == False:
+            total_n = len(self.xi)
+        
+        else:
+            total_n = self.fa.sum()
+
+        return total_n
+
+    def __obtener_datos_ni_xi__(self):
+        
+        if self.xi_es_index == True:
+
+            xi = self.datos.index
+                
+        else:
+            
+            xi = self.datos.loc[: , self.nombre_columna_xi]
+
+        ni = self.datos.loc[: , self.nombre_columna_fa]
+        
+        return (xi, ni)
+
     def __creacion_intervalos__(self, rango_intervalos):
         '''
         Crea intervalos de los datos proporcionados de acuerdo al rango requerido para los
@@ -108,6 +137,7 @@ class DatosEstadisticos:
 
     def __calculo_frecuencias_absolutas__(self, rango_intervalos):
         contar_datos = self.xi.value_counts().reset_index()
+        contar_datos.columns = ['xi', 'fa']
         n = self.total_n
 
         intervalos = pandas.Series(self.__creacion_intervalos__(rango_intervalos), name='intervalos')
@@ -140,27 +170,24 @@ class DatosEstadisticos:
             #frecuencias.append((intervalo, total_fa))
             frecuencias.append((total_fa))
 
-            frecuencias_series = pandas.Series(frecuencias, name=self.nombre_columna_xi)
+            #frecuencias_series = pandas.Series(frecuencias, name=self.nombre_columna_xi)
+            frecuencias_series = pandas.Series(frecuencias, name='fa')
 
             tabla_intervalos_frecuencias = pandas.concat([intervalos, frecuencias_series], axis=1)
 
         return tabla_intervalos_frecuencias
 
     def convertir_a_intervalos(self, rango_intervalos):
-        datos = self.__calculo_frecuencias_absolutas__(rango_intervalos)
-        #self.__init__(datos, self.titulo, columna_xi='intervalos', columna_fa=self.columna_fa, agrupados=True)
+        datos_intervalos = self.__calculo_frecuencias_absolutas__(rango_intervalos)
         
-        return datos
-
-    def __total_n__(self):
-
-        if self.agrupados == False:
-            total_n = len(self.datos[self.nombre_columna_xi])
-        
-        else:
-            total_n = self.datos[self.nombre_columna_fa].sum()
-
-        return total_n
+        self.datos = datos_intervalos
+        self.columna_xi = 'intervalos'
+        self.nombre_columna_xi = 'intervalos'
+        self.xi.name = 'intervalos'
+        self.columna_fa = 'fa'
+        self.fa.name = 'fa'
+        self.nombre_columna_fa = 'fa'
+        self.agrupados = True
 
     def _repr_html_(self):
         if self.agrupados == False:
@@ -187,30 +214,43 @@ class DatosEstadisticos:
 
 
 
-
-
 class AnalisisEstadistico:
     
-    def __init__(self, datos, titulo, agrupados=False, columna_xi=0, columna_fa=0, xi_es_index=False, muestra=True):
+    def __init__(self, datos, titulo=None, agrupados=False, columna_xi=0, columna_fa=0, xi_es_index=False, muestra=True):
         
-        if type(datos) == list:
+        if type(datos) == DatosEstadisticos:
+            
+            self.datos = datos.datos
+            self.titulo = datos.titulo
+            self.agrupados = datos.agrupados
+            self.columna_xi = datos.columna_xi
+            self.columna_fa = datos.columna_fa
+            self.xi_es_index = datos.xi_es_index
+            self.muestra = datos.muestra
 
-            self.datos = pandas.DataFrame(datos)
-
-        elif type(datos) == pandas.Series:
-
-            self.datos = datos.to_frame()
-        
         else:
-            self.datos = datos
-        
+
+            if type(datos) == list:
+
+                self.datos = pandas.DataFrame(datos)
+
+            elif type(datos) == pandas.Series:
+
+                self.datos = datos.to_frame()
+            
+            else:
+                self.datos = datos
+
+            self.titulo = titulo
+            self.agrupados = agrupados
+            self.columna_xi = columna_xi
+            self.columna_fa = columna_fa
+            self.xi_es_index = xi_es_index
+            self.muestra = muestra
+
+
         self.tabla_estadistica = self.datos.copy()
-        self.titulo = titulo
-        self.agrupados = agrupados
-        self.columna_xi = columna_xi
-        self.columna_fa = columna_fa
-        self.xi_es_index = xi_es_index
-        self.muestra = muestra
+        
 
         nombre_columnas = self.__obtener_nombre_columnas__()
         self.nombre_columna_xi = nombre_columnas['xi']
@@ -605,7 +645,7 @@ class AnalisisEstadistico:
             es_rango = self.__es_rango__()
             moda_fa = max(self.fa)
 
-            mask1 = self.tabla_estadistica['fa'] == moda_fa
+            mask1 = self.tabla_estadistica[self.nombre_columna_fa] == moda_fa
 
             index_moda = self.tabla_estadistica[mask1].index[0]
             iloc_moda = self.tabla_estadistica.index.get_loc(index_moda)

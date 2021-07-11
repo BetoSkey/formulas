@@ -1,60 +1,81 @@
 import pandas
 from IPython.core.display import display, HTML
+from datos_estadisticos import DatosEstadisticos
 from statistics import mean, median_grouped, median_high, variance, stdev, mode, multimode, quantiles
+from formulas_especiales import ceiling_to_a_number, floor_to_a_number
 
 
-class DatosEstadisticos:
+class AnalisisEstadistico:
     
-    def __init__(self, datos, titulo, agrupados=False, columna_xi=0, columna_fa=0, xi_es_index=False, muestra=True):
+    def __init__(self, datos, titulo=None, agrupados=False, columna_xi=0, columna_fa=0, xi_es_index=False, muestra=True):
         
-        if type(datos) == list:
-            self.datos = pandas.DataFrame(datos)
-        elif type(datos) == pandas.Series:
-            self.datos = datos.to_frame()
+        if type(datos) == DatosEstadisticos:
+            
+            self.__datos__ = datos.datos
+            self.__titulo__ = datos.titulo
+            self.__agrupados__ = datos.agrupados
+            self.__columna_xi__ = datos.columna_xi
+            self.__columna_fa__ = datos.columna_fa
+            self.__xi_es_index__ = datos.xi_es_index
+            self.__muestra__ = datos.muestra
+
         else:
-            self.datos = datos
+
+            if type(datos) == list:
+
+                self.__datos__ = pandas.DataFrame(datos)
+
+            elif type(datos) == pandas.Series:
+
+                self.__datos__ = datos.to_frame()
+            
+            else:
+                self.__datos__ = datos
+
+            self.__titulo__ = titulo
+            self.__agrupados__ = agrupados
+            self.__columna_xi__ = columna_xi
+            self.__columna_fa__ = columna_fa
+            self.__xi_es_index__ = xi_es_index
+            self.__muestra__ = muestra
+
+
+        self.tabla_estadistica = self.__datos__.copy()
         
-        
-        self.titulo = titulo
-        self.agrupados = agrupados
-        self.columna_xi = columna_xi
-        self.columna_fa = columna_fa
-        self.xi_es_index = xi_es_index
-        self.muestra = muestra
 
         nombre_columnas = self.__obtener_nombre_columnas__()
-        self.nombre_columna_xi = nombre_columnas['xi']
-        self.nombre_columna_fa = nombre_columnas['fa']
+        self.__nombre_columna_xi__ = nombre_columnas['xi']
+        self.__nombre_columna_fa__ = nombre_columnas['fa']
         
         
 
         datos_xi_ni = self.__obtener_datos_ni_xi__()
-        self.xi = datos_xi_ni[0]
-        self.fa = datos_xi_ni[1]
+        self.__xi__ = datos_xi_ni[0]
+        self.__fa__ = datos_xi_ni[1]
 
-        self.total_n = self.__total_n__()
+        self.__total_n__ = self.__total_n__()
 
         frecuencias_acumuladas = self.__calculo_frecuencias_acumuladas__()
-        self.faa = frecuencias_acumuladas['faa']
-        self.fr = frecuencias_acumuladas['fr']
-        self.fra = frecuencias_acumuladas['fra']
+        self.__faa__ = frecuencias_acumuladas['faa']
+        self.__fr__ = frecuencias_acumuladas['fr']
+        self.__fra__ = frecuencias_acumuladas['fra']
 
-        self.mc = self.__calculo_marcas_clase__()
-        self.xi2 = self.__obtener_xi2__()
+        self.__mc__ = self.__calculo_marcas_clase__()
+        self.__xi2__ = self.__obtener_xi2__()
 
         columnas_ni_por_xi = self.__calcular_columna_ni_por_xi__()
-        self.ni_xi = columnas_ni_por_xi[0]
-        self.ni_xi2 = columnas_ni_por_xi[1]
+        self.__ni_xi__ = columnas_ni_por_xi[0]
+        self.__ni_xi2__ = columnas_ni_por_xi[1]
 
         self.__ordenar_datos__()
 
     def __ordenar_datos__(self):
 
-        if self.xi_es_index == True:
-            self.datos.sort_index(inplace=True)
+        if self.__xi_es_index__ == True:
+            self.tabla_estadistica.sort_index(inplace=True)
 
         else:
-            self.datos.sort_values(self.nombre_columna_xi, inplace=True)
+            self.tabla_estadistica.sort_values(self.__nombre_columna_xi__, inplace=True)
 
     def __obtener_nombre_columnas__(self):
         '''
@@ -66,39 +87,112 @@ class DatosEstadisticos:
             (nombre columna "xi", nombre columna "fa")
         '''
 
-        type_xi = type(self.columna_xi)
-        type_fa = type(self.columna_fa)
+        type_xi = type(self.__columna_xi__)
+        type_fa = type(self.__columna_fa__)
         
         #------- obtenemos nombre de columna "xi" -------
         # Si "xi" esta en el index
-        if self.xi_es_index == True:
-            columna_xi_name = self.datos.index.name
+        if self.__xi_es_index__ == True:
+            columna_xi_name = self.tabla_estadistica.index.name
 
         else:
             # Si "xi" no esta en el index
             # Si "xi" es string
             if type_xi == str:
-                columna_xi_name = self.columna_xi
+                columna_xi_name = self.__columna_xi__
             
             # Si "xi" no esta en el index
             # Si "xi" es un numero
             else:
-                columna_xi_name = self.datos.iloc[:,self.columna_xi].name
+                columna_xi_name = self.tabla_estadistica.iloc[:,self.__columna_xi__].name
 
         #------- obtenemos nombre de columna "fa" -------
         # Si "fa" es string
         if type_fa == str:
-            columna_fa_name = self.columna_fa
+            columna_fa_name = self.__columna_fa__
 
         # Si "fa" es un numero
         else:
-            columna_fa_name = self.datos.iloc[:,self.columna_fa].name
+            columna_fa_name = self.tabla_estadistica.iloc[:,self.__columna_fa__].name
 
         return {'xi':columna_xi_name, 'fa':columna_fa_name}
+
+    def __creacion_intervalos__(self, rango_intervalos):
+        '''
+        Crea intervalos de los datos proporcionados de acuerdo al rango requerido para los
+        intervalos.
+
+        *** solo acepta listas***
+        '''
+        maximo_numero_en_rangos = ceiling_to_a_number(max(self.__xi__), rango_intervalos)
+        minimo_numero_en_rangos = floor_to_a_number(min(self.__xi__), rango_intervalos)
+
+        distancia_minimo_numero_vs_maximo_numero_en_rangos = maximo_numero_en_rangos - \
+            minimo_numero_en_rangos
+
+        cantidad_intervalos = int(
+            distancia_minimo_numero_vs_maximo_numero_en_rangos / rango_intervalos)
+
+        intervalos = [[
+            minimo_numero_en_rangos,
+            minimo_numero_en_rangos + rango_intervalos
+        ]]
+
+        for intervalo in range(cantidad_intervalos - 1):
+            intervalos.append(
+                [intervalos[-1][1], (intervalos[-1][1]) + rango_intervalos])
+
+        return intervalos
+
+    def __calculo_frecuencias_absolutas__(self, rango_intervalos):
+        contar_datos = self.__xi__.value_counts().reset_index()
+        n = self.__total_n__
+
+        intervalos = pandas.Series(self.__creacion_intervalos__(rango_intervalos), name='intervalos')
+        ultimo_intervalo = intervalos[len(intervalos)-1]
+
+        frecuencias = []
+
+        for intervalo in intervalos:
+            conteo = 0
+            
+            if intervalo == ultimo_intervalo:
+
+                intervalo_inferior = intervalo[0]
+                intervalo_superior = intervalo[1] +1
+            else:
+                intervalo_inferior = intervalo[0]
+                intervalo_superior = intervalo[1]
+
+            #recorriendo el index
+            for i in range(len(contar_datos)):
+              
+                xi = contar_datos.iloc[i][0]
+                fa = contar_datos.iloc[i][1]
     
+                if xi in range(intervalo_inferior, intervalo_superior):
+                    conteo += fa
+            
+            total_fa = conteo
+
+            #frecuencias.append((intervalo, total_fa))
+            frecuencias.append((total_fa))
+
+            frecuencias_series = pandas.Series(frecuencias, name=self.__nombre_columna_xi__)
+
+            tabla_intervalos_frecuencias = pandas.concat([intervalos, frecuencias_series], axis=1)
+
+        return tabla_intervalos_frecuencias
+
+    def convertir_a_intervalos(self, rango_intervalos):
+        datos = self.__calculo_frecuencias_absolutas__(rango_intervalos)
+        #self.__init__(datos, self.__titulo__, columna_xi='intervalos', columna_fa=self.__columna_fa__, agrupados=True)
+        
+        return datos
+
     def __es_rango__(self):
         
-        xi = self.xi
+        xi = self.__xi__
         
         try:
             es_rango = True if (type(xi.iloc[0]) is list or type(xi.iloc[0]) is tuple) else False
@@ -110,60 +204,60 @@ class DatosEstadisticos:
 
     def __total_n__(self):
 
-        if self.agrupados == False:
-            total_n = len(self.xi)
+        if self.__agrupados__ == False:
+            total_n = len(self.__xi__)
         
         else:
-            total_n = self.fa.sum()
+            total_n = self.__fa__.sum()
 
         return total_n
 
     def __obtener_datos_ni_xi__(self):
         
-        if self.xi_es_index == True:
+        if self.__xi_es_index__ == True:
 
-            xi = self.datos.index
+            xi = self.tabla_estadistica.index
                 
         else:
             
-            xi = self.datos.loc[: , self.nombre_columna_xi]
+            xi = self.tabla_estadistica.loc[: , self.__nombre_columna_xi__]
 
-        ni = self.datos.loc[: , self.nombre_columna_fa]
+        ni = self.tabla_estadistica.loc[: , self.__nombre_columna_fa__]
         
         return (xi, ni)
 
     def __obtener_xi2__(self):
 
-        if self.agrupados == False:
+        if self.__agrupados__ == False:
             xi2 = None
         
         else:
             es_rango = self.__es_rango__()
 
-            xi = self.xi
-            mc = self.mc
+            xi = self.__xi__
+            mc = self.__mc__
 
             if es_rango:
-                xi2 = self.datos['xi2'] = mc ** 2
+                xi2 = self.tabla_estadistica['xi2'] = mc ** 2
             
             else:
-                xi2 = self.datos['xi2'] = xi ** 2
+                xi2 = self.tabla_estadistica['xi2'] = xi ** 2
         
         return xi2
 
     def __calcular_columna_ni_por_xi__(self):
 
-        if self.agrupados == True:
-            if self.mc is not None:
-                self.datos['ni*xi'] = self.mc * self.fa
+        if self.__agrupados__ == True:
+            if self.__mc__ is not None:
+                self.tabla_estadistica['ni*xi'] = self.__mc__ * self.__fa__
                 
             else:
-                self.datos['ni*xi'] = self.xi * self.fa
+                self.tabla_estadistica['ni*xi'] = self.__xi__ * self.__fa__
             
-            self.datos['ni*xi2'] = self.xi2 * self.fa
+            self.tabla_estadistica['ni*xi2'] = self.__xi2__ * self.__fa__
 
-            ni_xi = self.datos['ni*xi']
-            ni_xi2 = self.datos['ni*xi2']
+            ni_xi = self.tabla_estadistica['ni*xi']
+            ni_xi2 = self.tabla_estadistica['ni*xi2']
         else:
             ni_xi = None   
             ni_xi2 = None
@@ -199,17 +293,17 @@ class DatosEstadisticos:
             Calcula las marcas de clase cuando los datos estan agrupados por intervalos
         '''
 
-        xi = self.xi
+        xi = self.__xi__
         
         es_rango = self.__es_rango__()
         
         if es_rango:
 
-            self.datos['marca clase'] = self.xi
+            self.tabla_estadistica['marca clase'] = self.__xi__
             
-            self.datos['marca clase'] = self.datos['marca clase'].apply(self.__marca_clase__)
+            self.tabla_estadistica['marca clase'] = self.tabla_estadistica['marca clase'].apply(self.__marca_clase__)
 
-            marcas_de_clase = self.datos['marca clase']
+            marcas_de_clase = self.tabla_estadistica['marca clase']
 
         else:
             marcas_de_clase = None
@@ -218,37 +312,37 @@ class DatosEstadisticos:
 
     def __calculo_frecuencias_acumuladas__(self):
         
-        xi = self.xi
-        fa = self.fa
-        total_n = self.total_n
+        xi = self.__xi__
+        fa = self.__fa__
+        total_n = self.__total_n__
 
-        if self.agrupados == False:
+        if self.__agrupados__ == False:
             faa = None
             fr = None
             fra = None
 
         else:
-            faa = self.datos['faa'] = fa.cumsum()
-            fr = self.datos['fr'] = fa / total_n
-            fra = self.datos['fra'] = fr.cumsum()
+            faa = self.tabla_estadistica['faa'] = fa.cumsum()
+            fr = self.tabla_estadistica['fr'] = fa / total_n
+            fra = self.tabla_estadistica['fra'] = fr.cumsum()
 
         return {'faa': faa, 'fr': fr, 'fra': fra}
 
     @property
     def media(self):
             
-        xi = self.xi
-        ni = self.fa
+        xi = self.__xi__
+        ni = self.__fa__
 
-        if self.agrupados == False:
+        if self.__agrupados__ == False:
 
             media = xi.mean()
 
         else:
             
             #Si los datos estan agrupados por rangos
-            if self.mc is not None:
-                xi = self.mc
+            if self.__mc__ is not None:
+                xi = self.__mc__
 
             
             sumatoria_ni = ni.sum()
@@ -262,59 +356,59 @@ class DatosEstadisticos:
     def mediana(self):
         
         # Si los datos no estan agrupados
-        if self.agrupados == False:
-            mediana = self.fa.median()
+        if self.__agrupados__ == False:
+            mediana = self.__fa__.median()
 
         # Si los datos estan agrupados
         else:
-            total_n = self.total_n
-            faa = self.faa
+            total_n = self.__total_n__
+            faa = self.__faa__
             es_rango = self.__es_rango__()
 
             mediana_faa = median_grouped(faa)
 
-            mask1 = self.datos['faa'] == mediana_faa
+            mask1 = self.tabla_estadistica['faa'] == mediana_faa
             
             try:
-                index_mediana = self.datos[mask1].index[0]
+                index_mediana = self.tabla_estadistica[mask1].index[0]
             
             except:
                 mediana_faa = median_high(faa)
 
-                mask1 = self.datos['faa'] == mediana_faa
+                mask1 = self.tabla_estadistica['faa'] == mediana_faa
 
-                index_mediana = self.datos[mask1].index[0]
+                index_mediana = self.tabla_estadistica[mask1].index[0]
 
-            iloc_mediana = self.datos.index.get_loc(index_mediana)
+            iloc_mediana = self.tabla_estadistica.index.get_loc(index_mediana)
 
             # Si "xi" no son intervalos/rangos
             if es_rango == False:
-                if self.xi_es_index == True:
+                if self.__xi_es_index__ == True:
                     mediana = index_mediana
                 
                 else:
-                    mediana = self.datos[mask1][self.nombre_columna_xi][index_mediana]
+                    mediana = self.tabla_estadistica[mask1][self.__nombre_columna_xi__][index_mediana]
             
             # Si "xi" son intervalos/rangos
             else:
 
                 # Se obteiene el intervalo de la mediana si esta en el index
-                if self.xi_es_index == True:
+                if self.__xi_es_index__ == True:
                     intervalo_mediana = index_mediana
 
                 # Se obtiene el intevalo de la mediana si esta en las columnas
                 else:
-                    intervalo_mediana = self.datos[mask1][self.nombre_columna_xi][index_mediana]
+                    intervalo_mediana = self.tabla_estadistica[mask1][self.__nombre_columna_xi__][index_mediana]
                 
                 # Limite inferior y superior del intervalo de la mediana
                 Li = intervalo_mediana[0]
                 Ls = intervalo_mediana[1]
 
                 # Frecuencia absoluta acumulada del intervalo de la mediana anterior
-                faa_intervalo_mediana_anterior = self.datos.iloc[iloc_mediana-1].loc['faa']
+                faa_intervalo_mediana_anterior = self.tabla_estadistica.iloc[iloc_mediana-1].loc['faa']
 
                 # Frecuencia absoluta del intervalo de la mediana
-                ni = self.datos.iloc[iloc_mediana].loc[self.nombre_columna_fa]
+                ni = self.tabla_estadistica.iloc[iloc_mediana].loc[self.__nombre_columna_fa__]
                 
                 # Tamano del intervalo de la mediana
                 ti = Ls - Li
@@ -328,51 +422,51 @@ class DatosEstadisticos:
     def moda(self, multimoda=False):
 
         # Datos No Agrupados
-        if self.agrupados == False:
+        if self.__agrupados__ == False:
             if multimoda == False:
-                moda = mode(self.xi)
+                moda = mode(self.__xi__)
             
             else:
-                moda = multimode(self.xi)
+                moda = multimode(self.__xi__)
 
         # Datos Agrupados
         else:
 
             es_rango = self.__es_rango__()
-            moda_fa = max(self.fa)
+            moda_fa = max(self.__fa__)
 
-            mask1 = self.datos['fa'] == moda_fa
+            mask1 = self.tabla_estadistica[self.__nombre_columna_fa__] == moda_fa
 
-            index_moda = self.datos[mask1].index[0]
-            iloc_moda = self.datos.index.get_loc(index_moda)
+            index_moda = self.tabla_estadistica[mask1].index[0]
+            iloc_moda = self.tabla_estadistica.index.get_loc(index_moda)
 
             # Si "xi" no son intervalos/rangos
             if es_rango == False:
-                if self.xi_es_index == True:
+                if self.__xi_es_index__ == True:
                     moda = index_moda
                 
                 else:
-                    moda = self.datos[mask1][self.nombre_columna_xi][index_moda]
+                    moda = self.tabla_estadistica[mask1][self.__nombre_columna_xi__][index_moda]
             
             else:
                 # Se obteiene el intervalo modal si esta en el index
-                if self.xi_es_index == True:
+                if self.__xi_es_index__ == True:
                     intervalo_moda = index_moda
 
                 # Se obtiene el intevalo modal si esta en las columnas
                 else:
-                    intervalo_moda = self.datos[mask1][self.nombre_columna_xi][index_moda]
+                    intervalo_moda = self.tabla_estadistica[mask1][self.__nombre_columna_xi__][index_moda]
                 
                 # Limite inferior y superior del intervalo modal
                 Li = intervalo_moda[0]
                 Ls = intervalo_moda[1]
 
                 # Frecuencia absoluta del intervalo anterior y siguiente al intevalo modal
-                fa_intervalo_modal_anterior = self.datos.iloc[iloc_moda-1].loc[self.nombre_columna_fa]
-                fa_intervalo_modal_siguiente = self.datos.iloc[iloc_moda+1].loc[self.nombre_columna_fa]
+                fa_intervalo_modal_anterior = self.tabla_estadistica.iloc[iloc_moda-1].loc[self.__nombre_columna_fa__]
+                fa_intervalo_modal_siguiente = self.tabla_estadistica.iloc[iloc_moda+1].loc[self.__nombre_columna_fa__]
 
                 # Frecuencia absoluta del intervalo modal
-                ni = self.datos.iloc[iloc_moda].loc[self.nombre_columna_fa]
+                ni = self.tabla_estadistica.iloc[iloc_moda].loc[self.__nombre_columna_fa__]
                 
                 # Tamano del intervalo modal
                 ti = Ls - Li
@@ -386,12 +480,12 @@ class DatosEstadisticos:
 
     @property
     def varianza(self):
-        xi = self.xi
-        nixi2 = self.ni_xi2
-        n = self.total_n
+        xi = self.__xi__
+        nixi2 = self.__ni_xi2__
+        n = self.__total_n__
         media = self.media
 
-        if self.agrupados == True:
+        if self.__agrupados__ == True:
             varianza = ((sum(nixi2) / n) - (media ** 2))
         
         else:
@@ -449,11 +543,11 @@ class DatosEstadisticos:
         media = self.media
         mediana = self.mediana
         s = self.desviacion_estandar
-        xi = self.xi
-        n = self.total_n
+        xi = self.__xi__
+        n = self.__total_n__
 
 
-        if self.agrupados == False:
+        if self.__agrupados__ == False:
             
             xi_menos_media_al_cubo = []
 
@@ -469,13 +563,13 @@ class DatosEstadisticos:
             
             if self.es_rango() == False:
 
-                xi_ni = self.datos[['xi', 'fa']]
+                xi_ni = self.tabla_estadistica[['xi', 'fa']]
 
                 As = sum((xi_ni['fa'] * (xi_ni['xi'] - media)) ** 3) / (n * (s**3))
         
             else:
 
-                mc_ni = self.datos[['mc', 'fa']]
+                mc_ni = self.tabla_estadistica[['mc', 'fa']]
 
                 As = sum((xi_ni['fa'] * (xi_ni['mc'] - media)) ** 3) / (n * (s**3))
 
@@ -502,9 +596,9 @@ class DatosEstadisticos:
         return cv
 
     def cuantiles(self, n=4, method='exclusive'):
-        xi = self.xi
+        xi = self.__xi__
 
-        if self.agrupados == False:
+        if self.__agrupados__ == False:
             cuantiles = quantiles(xi, n=n, method=method)
         
         else:
@@ -517,19 +611,19 @@ class DatosEstadisticos:
         Objetivo. regresa [xi, fa, fra] del renglon del porcentaje (percentil) objetivo
 
         '''
-        mascara = self.datos['fra'] > percentil_objetivo
-        index_resultado = self.datos[mascara].index.min()
+        mascara = self.tabla_estadistica['fra'] > percentil_objetivo
+        index_resultado = self.tabla_estadistica[mascara].index.min()
 
-        resultado = self.datos.loc[index_resultado][[self.nombre_columna_xi, 'faa', 'fra']]
+        resultado = self.tabla_estadistica.loc[index_resultado][[self.__nombre_columna_xi__, 'faa', 'fra']]
 
         return resultado
 
     def diagrama_caja_bigotes(self):
         
-        titulo = self.titulo
-        agrupados = self.agrupados
+        titulo = self.__titulo__
+        agrupados = self.__agrupados__
 
-        xi = self.xi
+        xi = self.__xi__
         cuartiles = self.cuantiles(n=4)
         
         q1 = cuartiles[0]
@@ -556,7 +650,7 @@ class DatosEstadisticos:
         
         display(HTML(f'''
         <p align="left">
-        <pre>Titulo:      <strong><span style="font-size:110%">{self.titulo}</span></strong></br></pre>
+        <pre>Titulo:      <strong><span style="font-size:110%">{self.__titulo__}</span></strong></br></pre>
         <pre>Agrupados:   <strong><span style="font-size:110%">{agrupados}</span></strong></br></pre>
         </br>
         <pre>Q1:                     <strong><span style="font-size:110%">{q1}</span></strong></br></pre>
@@ -582,10 +676,10 @@ class DatosEstadisticos:
 
     @property
     def info(self):
-        titulo = self.titulo
-        agrupados = self.agrupados
+        titulo = self.__titulo__
+        agrupados = self.__agrupados__
 
-        total_n = self.total_n
+        total_n = self.__total_n__
         media = self.media
         mediana = self.mediana
         moda = self.moda
@@ -595,7 +689,7 @@ class DatosEstadisticos:
 
         display(HTML(f'''
         <p align="left">
-        <pre>Titulo:      <strong><span style="font-size:110%">{self.titulo}</span></strong></br></pre>
+        <pre>Titulo:      <strong><span style="font-size:110%">{self.__titulo__}</span></strong></br></pre>
         <pre>Agrupados:   <strong><span style="font-size:110%">{agrupados}</span></strong></br></pre>
         </br>
         <pre>n:           <strong><span style="font-size:90%">{total_n}</span></strong></br></pre>
@@ -611,48 +705,34 @@ class DatosEstadisticos:
 
     def __str__(self):
         return f'''
-        Titulo: {self.titulo}
-        Agrupados: {self.agrupados}
-        Xi se encuentra en index: {self.xi_es_index}
-        Xi: {self.nombre_columna_xi}
-        Fa: {self.nombre_columna_fa}
+        Titulo: {self.__titulo__}
+        Agrupados: {self.__agrupados__}
+        Xi se encuentra en index: {self.__xi_es_index__}
+        Xi: {self.__nombre_columna_xi__}
+        Fa: {self.__nombre_columna_fa__}
         '''
 
     def _repr_html_(self):
-        if self.agrupados == False:
+        if self.__agrupados__ == False:
             return f'''
             <p align="left">
-            <pre>Titulo:      <strong><span style="font-size:110%">{self.titulo}</span></strong></br></pre>
-            <pre>Agrupados:   <strong><span style="font-size:110%">{self.agrupados}</span></strong></br></pre>
-            <pre>Columna Xi:  <strong><span style="font-size:110%">{self.nombre_columna_xi}</span></strong></br></pre>
-            <pre>Total n:     <strong><span style="font-size:110%">{self.total_n}</span></strong></br></pre>
+            <pre>Titulo:      <strong><span style="font-size:110%">{self.__titulo__}</span></strong></br></pre>
+            <pre>Agrupados:   <strong><span style="font-size:110%">{self.__agrupados__}</span></strong></br></pre>
+            <pre>Columna Xi:  <strong><span style="font-size:110%">{self.__nombre_columna_xi__}</span></strong></br></pre>
+            <pre>Total n:     <strong><span style="font-size:110%">{self.__total_n__}</span></strong></br></pre>
             </p>
-            {self.datos._repr_html_()}
+            {self.tabla_estadistica._repr_html_()}
             '''
 
         else:
             return f'''
             <p align="left">
-            <pre>Titulo:          <strong><span style="font-size:110%">{self.titulo}</span></strong></br></pre>
-            <pre>Agrupados:       <strong><span style="font-size:110%">{self.agrupados}</span></strong></br></pre>
-            <pre>Columna Xi:      <strong><span style="font-size:110%">{self.nombre_columna_xi}</span></strong></br></pre>
-            <pre>Columna ni/Fa:   <strong><span style="font-size:110%">{self.nombre_columna_fa}</span></strong></pre>
-            <pre>Total n:     <strong><span style="font-size:110%">{self.total_n}</span></strong></br></pre>
+            <pre>Titulo:          <strong><span style="font-size:110%">{self.__titulo__}</span></strong></br></pre>
+            <pre>Agrupados:       <strong><span style="font-size:110%">{self.__agrupados__}</span></strong></br></pre>
+            <pre>Columna Xi:      <strong><span style="font-size:110%">{self.__nombre_columna_xi__}</span></strong></br></pre>
+            <pre>Columna ni/Fa:   <strong><span style="font-size:110%">{self.__nombre_columna_fa__}</span></strong></pre>
+            <pre>Total n:     <strong><span style="font-size:110%">{self.__total_n__}</span></strong></br></pre>
             </p>
-            {self.datos._repr_html_()}'''
+            {self.tabla_estadistica._repr_html_()}'''
 
 
-
-if '__main__' == __name__:
-
-    saltos = [
-    283.6, 269.4, 262.2, 261.1, 246.7, 245.5, 239.2, 233.7, 230.3, 227.9, 
-    226.4, 225.5, 224.1, 223.6, 222.3, 221.4, 217.8, 217.2, 216.9, 211.6,
-    211.4, 208.5, 204.9, 202.7, 202.4, 200.5, 198.5, 182.4, 111
-    ]
-
-    saltos = pandas.DataFrame(saltos, columns = ['saltos'])
-
-    de_saltos = DatosEstadisticos(saltos, 'Resultados de Saltos de Esqui Masculino')
-
-    print(de_saltos)
