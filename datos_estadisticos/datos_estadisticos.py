@@ -8,7 +8,7 @@ from formulas_especiales import ceiling_to_a_number, floor_to_a_number
 class DatosEstadisticos:
 
     def __init__(self, datos, titulo, repr_xi, repr_fa, agrupados=False, columna_xi=0, columna_fa=0, xi_es_index=False, muestra=True):
-        
+        'me encuentro en branch creacion_tabla_estadistica'
 
         if type(datos) == list:
             self.datos = pandas.DataFrame(datos)
