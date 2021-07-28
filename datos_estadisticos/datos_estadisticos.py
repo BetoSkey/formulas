@@ -397,6 +397,12 @@ class AnalisisEstadistico:
             self.__fa__ = datos.fa
             self.__total_n__ = datos.total_n
 
+            self.nombres_columnas_estadisticas = {
+                'mc': 'marca clase', 'faa': 'faa', 'fr': 'fr', 'fra': 'fra', 
+                'xi2': 'xi2', 'ni_xi': 'ni*xi', 'ni_xi2': 'ni*xi2', 
+                'xi-media': 'xi-media', 'ni*(xi-media)2': 'ni*(xi-media)2', 
+                'ni*(xi-media)3': 'ni*(xi-media)3', 'ni*(xi-media)4': 'ni*(xi-media)4'}
+
         else:
             raise TypeError('Solo acepta objeto DatosEstadisticos')
 
@@ -405,17 +411,14 @@ class AnalisisEstadistico:
 
         self.__mc__ = self.__calculo_marcas_clase__()
 
+        # cambiar las referencias directas a las variables self.__*__ en las formulas por una referencia directa
         columnas_estadisticas = self.creacion_columnas_estadisticas()
         self.__faa__ = columnas_estadisticas['faa']
         self.__fr__ = columnas_estadisticas['fr']
         self.__fra__ = columnas_estadisticas['fra']
-
-        self.__xi2__ = self.__obtener_xi2__()
-
-        columnas_ni_por_xi = self.__calcular_columna_ni_por_xi__()
-        self.__ni_xi__ = columnas_ni_por_xi[0]
-        self.__ni_xi2__ = columnas_ni_por_xi[1]
-
+        self.__xi2__ = columnas_estadisticas['xi2']
+        self.__ni_xi__ = columnas_estadisticas['ni_xi']
+        self.__ni_xi2__ = columnas_estadisticas['ni_xi2']
 
 
         self.__ordenar_datos__()
@@ -547,44 +550,6 @@ class AnalisisEstadistico:
 
         return es_rango
 
-    def __obtener_xi2__(self):
-
-        if self.__agrupados__ == False:
-            xi2 = None
-        
-        else:
-            es_rango = self.__es_rango__()
-
-            xi = self.__xi__
-            mc = self.__mc__
-
-            if es_rango:
-                xi2 = self.tabla_estadistica['xi2'] = mc ** 2
-            
-            else:
-                xi2 = self.tabla_estadistica['xi2'] = xi ** 2
-        
-        return xi2
-
-    def __calcular_columna_ni_por_xi__(self):
-
-        if self.__agrupados__ == True:
-            if self.__mc__ is not None:
-                self.tabla_estadistica['ni*xi'] = self.__mc__ * self.__fa__
-                
-            else:
-                self.tabla_estadistica['ni*xi'] = self.__xi__ * self.__fa__
-            
-            self.tabla_estadistica['ni*xi2'] = self.__xi2__ * self.__fa__
-
-            ni_xi = self.tabla_estadistica['ni*xi']
-            ni_xi2 = self.tabla_estadistica['ni*xi2']
-        else:
-            ni_xi = None   
-            ni_xi2 = None
-
-        return (ni_xi, ni_xi2)
-
     def __marca_clase__(self, rango):
         '''
         Funcion:
@@ -714,18 +679,22 @@ class AnalisisEstadistico:
         total_n =                 self.__total_n__
         media =                   self.media
         xi =                      self.tabla_estadistica[self.__nombre_columna_xi__] if es_rango == False else self.tabla_estadistica['marca clase']
-        
+        xi2 = self.tabla_estadistica['xi2'] = xi ** 2
+
         if self.__agrupados__ == False:
             faa = None
             fr = None
             fra = None
-            xi2 = None
+            ni_xi = None   
+            ni_xi2 = None
+
 
         else:
-            faa = self.tabla_estadistica['faa'] = fa.cumsum()
+            faa = self.tabla_estadistica[self.nombres_columnas_estadisticas['faa']] = fa.cumsum()
             fr = self.tabla_estadistica['fr'] = fa / total_n
             fra = self.tabla_estadistica['fra'] = fr.cumsum()
-            xi2 = None
+            ni_xi = self.tabla_estadistica['ni*xi'] = xi * fa
+            ni_xi2 = self.tabla_estadistica['ni*xi2'] = xi2 * fa
             self.tabla_estadistica['xi-media'] = xi - media
             xi_menos_media_por_ni =   self.tabla_estadistica[['xi-media', self.__nombre_columna_fa__]]
             
@@ -733,7 +702,7 @@ class AnalisisEstadistico:
             self.tabla_estadistica['ni*(xi-media)3'] = xi_menos_media_por_ni.apply(self.xi_menos_media_por_ni_exponencial, args=[3], axis='columns')
             self.tabla_estadistica['ni*(xi-media)4'] = xi_menos_media_por_ni.apply(self.xi_menos_media_por_ni_exponencial, args=[4], axis='columns')
         
-        return {'faa': faa, 'fr': fr, 'fra': fra, 'xi2':xi2}
+        return {'faa': faa, 'fr': fr, 'fra': fra, 'xi2':xi2, 'ni_xi': ni_xi, 'ni_xi2': ni_xi2}
 
 
     @property
