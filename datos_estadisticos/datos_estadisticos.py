@@ -397,11 +397,11 @@ class AnalisisEstadistico:
             self.__fa__ = datos.fa
             self.__total_n__ = datos.total_n
 
-            self.nombres_columnas_estadisticas = {
-                'mc': 'marca clase', 'faa': 'faa', 'fr': 'fr', 'fra': 'fra', 
-                'xi2': 'xi2', 'ni_xi': 'ni*xi', 'ni_xi2': 'ni*xi2', 
-                'xi-media': 'xi-media', 'ni*(xi-media)2': 'ni*(xi-media)2', 
-                'ni*(xi-media)3': 'ni*(xi-media)3', 'ni*(xi-media)4': 'ni*(xi-media)4'}
+            self.__nombres_columnas_estadisticas__ = {
+                'mc': 'MC', 'faa': 'FAA', 'fr': 'FR', 'fra': 'FRA', 
+                'xi2': 'Xi2', 'ni*xi': 'Ni*Xi', 'ni*xi2': 'Ni*Xi2', 
+                'xi-media': 'Xi-Media', 'ni*(xi-media)2': 'Ni*(Xi-Media)2', 
+                'ni*(xi-media)3': 'Ni*(Xi-Media)3', 'ni*(xi-media)4': 'Ni*(Xi-Media)4'}
 
         else:
             raise TypeError('Solo acepta objeto DatosEstadisticos')
@@ -412,7 +412,7 @@ class AnalisisEstadistico:
         self.__mc__ = self.__calculo_marcas_clase__()
 
         # cambiar las referencias directas a las variables self.__*__ en las formulas por una referencia directa
-        columnas_estadisticas = self.creacion_columnas_estadisticas()
+        columnas_estadisticas = self.__creacion_columnas_estadisticas__()
         self.__faa__ = columnas_estadisticas['faa']
         self.__fr__ = columnas_estadisticas['fr']
         self.__fra__ = columnas_estadisticas['fra']
@@ -586,11 +586,11 @@ class AnalisisEstadistico:
         
         if es_rango:
             
-            self.tabla_estadistica['marca clase'] = xi
+            self.tabla_estadistica[self.__nombres_columnas_estadisticas__['mc']] = xi
             
-            self.tabla_estadistica['marca clase'] = self.tabla_estadistica['marca clase'].apply(self.__marca_clase__)
+            self.tabla_estadistica[self.__nombres_columnas_estadisticas__['mc']] = self.tabla_estadistica[self.__nombres_columnas_estadisticas__['mc']].apply(self.__marca_clase__)
 
-            marcas_de_clase = self.tabla_estadistica['marca clase']
+            marcas_de_clase = self.tabla_estadistica[self.__nombres_columnas_estadisticas__['mc']]
 
         else:
             marcas_de_clase = None
@@ -604,7 +604,7 @@ class AnalisisEstadistico:
         index_clase_mediana = 0
         
         while True:
-            if self.tabla_estadistica.iloc[index_clase_mediana].loc['faa'] < mitad_faa:
+            if self.tabla_estadistica.iloc[index_clase_mediana].loc[self.__nombres_columnas_estadisticas__['faa']] < mitad_faa:
                 index_clase_mediana +=1
             else:
                 clase_mediana = index_clase_mediana
@@ -629,7 +629,7 @@ class AnalisisEstadistico:
             index_clase_cuantil = 0
             
             while True:
-                if self.tabla_estadistica.iloc[index_clase_cuantil].loc['faa'] < cuantil_a_buscar:
+                if self.tabla_estadistica.iloc[index_clase_cuantil].loc[self.__nombres_columnas_estadisticas__['faa']] < cuantil_a_buscar:
                     index_clase_cuantil +=1
                 else:
                     break
@@ -654,7 +654,7 @@ class AnalisisEstadistico:
         
         if es_rango == True:
             
-            fisher = self.tabla_estadistica[['marca clase', self.__nombre_columna_fa__]].apply(self.__sumatoria_xi_menos_media_por_ni_al_cubo__, args=[self.media], axis='columns')
+            fisher = self.tabla_estadistica[[self.__nombres_columnas_estadisticas__['mc'], self.__nombre_columna_fa__]].apply(self.__sumatoria_xi_menos_media_por_ni_al_cubo__, args=[self.media], axis='columns')
         
         else:
             
@@ -664,7 +664,7 @@ class AnalisisEstadistico:
             
         return fisher
 
-    def xi_menos_media_por_ni_exponencial(self, dataframe, exponente):
+    def __xi_menos_media_por_ni_exponencial__(self, dataframe, exponente):
         xi_menos_media = dataframe[0]
         
         ni = dataframe[1]
@@ -673,13 +673,13 @@ class AnalisisEstadistico:
         
         return resultado
 
-    def creacion_columnas_estadisticas(self):
+    def __creacion_columnas_estadisticas__(self):
         es_rango = self.__es_rango__()
         fa =                      self.__fa__
         total_n =                 self.__total_n__
         media =                   self.media
-        xi =                      self.tabla_estadistica[self.__nombre_columna_xi__] if es_rango == False else self.tabla_estadistica['marca clase']
-        xi2 = self.tabla_estadistica['xi2'] = xi ** 2
+        xi =                      self.tabla_estadistica[self.__nombre_columna_xi__] if es_rango == False else self.tabla_estadistica[self.__nombres_columnas_estadisticas__['mc']]
+        xi2 = self.tabla_estadistica[self.__nombres_columnas_estadisticas__['xi2']] = xi ** 2
 
         if self.__agrupados__ == False:
             faa = None
@@ -690,20 +690,19 @@ class AnalisisEstadistico:
 
 
         else:
-            faa = self.tabla_estadistica[self.nombres_columnas_estadisticas['faa']] = fa.cumsum()
-            fr = self.tabla_estadistica['fr'] = fa / total_n
-            fra = self.tabla_estadistica['fra'] = fr.cumsum()
-            ni_xi = self.tabla_estadistica['ni*xi'] = xi * fa
-            ni_xi2 = self.tabla_estadistica['ni*xi2'] = xi2 * fa
-            self.tabla_estadistica['xi-media'] = xi - media
-            xi_menos_media_por_ni =   self.tabla_estadistica[['xi-media', self.__nombre_columna_fa__]]
+            faa = self.tabla_estadistica[self.__nombres_columnas_estadisticas__['faa']] = fa.cumsum()
+            fr = self.tabla_estadistica[self.__nombres_columnas_estadisticas__['fr']] = fa / total_n
+            fra = self.tabla_estadistica[self.__nombres_columnas_estadisticas__['fra']] = fr.cumsum()
+            ni_xi = self.tabla_estadistica[self.__nombres_columnas_estadisticas__['ni*xi']] = xi * fa
+            ni_xi2 = self.tabla_estadistica[self.__nombres_columnas_estadisticas__['ni*xi2']] = xi2 * fa
+            self.tabla_estadistica[self.__nombres_columnas_estadisticas__['xi-media']] = xi - media
+            xi_menos_media_por_ni =   self.tabla_estadistica[[self.__nombres_columnas_estadisticas__['xi-media'], self.__nombre_columna_fa__]]
             
-            self.tabla_estadistica['ni*(xi-media)2'] = xi_menos_media_por_ni.apply(self.xi_menos_media_por_ni_exponencial, args=[2], axis='columns')
-            self.tabla_estadistica['ni*(xi-media)3'] = xi_menos_media_por_ni.apply(self.xi_menos_media_por_ni_exponencial, args=[3], axis='columns')
-            self.tabla_estadistica['ni*(xi-media)4'] = xi_menos_media_por_ni.apply(self.xi_menos_media_por_ni_exponencial, args=[4], axis='columns')
+            self.tabla_estadistica[self.__nombres_columnas_estadisticas__['ni*(xi-media)2']] = xi_menos_media_por_ni.apply(self.__xi_menos_media_por_ni_exponencial__, args=[2], axis='columns')
+            self.tabla_estadistica[self.__nombres_columnas_estadisticas__['ni*(xi-media)3']] = xi_menos_media_por_ni.apply(self.__xi_menos_media_por_ni_exponencial__, args=[3], axis='columns')
+            self.tabla_estadistica[self.__nombres_columnas_estadisticas__['ni*(xi-media)4']] = xi_menos_media_por_ni.apply(self.__xi_menos_media_por_ni_exponencial__, args=[4], axis='columns')
         
         return {'faa': faa, 'fr': fr, 'fra': fra, 'xi2':xi2, 'ni_xi': ni_xi, 'ni_xi2': ni_xi2}
-
 
     @property
     def media(self):
@@ -778,7 +777,7 @@ class AnalisisEstadistico:
                 
 
                 # Frecuencia absoluta acumulada del intervalo de la mediana anterior
-                faa_intervalo_mediana_anterior = self.tabla_estadistica.iloc[index_mediana-1].loc['faa']
+                faa_intervalo_mediana_anterior = self.tabla_estadistica.iloc[index_mediana-1].loc[self.__nombres_columnas_estadisticas__['faa']]
                 
                 # Frecuencia absoluta del intervalo de la mediana
                 ni = self.tabla_estadistica.iloc[index_mediana].loc[self.__nombre_columna_fa__]
@@ -1130,7 +1129,7 @@ class AnalisisEstadistico:
                     
                     
                     # Frecuencia absoluta acumulada del intervalo de la mediana anterior                    
-                    faa_intervalo_cuantil_anterior = self.tabla_estadistica.iloc[index_cuantiles[nombre_index_cuantil]-1].loc['faa']
+                    faa_intervalo_cuantil_anterior = self.tabla_estadistica.iloc[index_cuantiles[nombre_index_cuantil]-1].loc[self.__nombres_columnas_estadisticas__['faa']]
                     
                     
                     # Frecuencia absoluta del intervalo de la mediana                    
@@ -1234,10 +1233,10 @@ class AnalisisEstadistico:
             resultado = percentiles[objetivo]
 
         else:
-            mascara = self.tabla_estadistica['fra'] > percentil_objetivo
+            mascara = self.tabla_estadistica[self.__nombres_columnas_estadisticas__['fra']] > percentil_objetivo
             index_resultado = self.tabla_estadistica[mascara].index.min()
 
-            resultado = self.tabla_estadistica.loc[index_resultado][[self.__nombre_columna_xi__, 'faa', 'fra']]
+            resultado = self.tabla_estadistica.loc[index_resultado][[self.__nombre_columna_xi__, self.__nombres_columnas_estadisticas__['faa'], self.__nombres_columnas_estadisticas__['fra']]]
 
         return resultado
 
