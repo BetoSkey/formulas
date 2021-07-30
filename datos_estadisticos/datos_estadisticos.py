@@ -557,7 +557,7 @@ class AnalisisEstadistico:
         
         if es_rango:
             
-            self.tabla_estadistica[self.__nombres_columnas_estadisticas__['mc']] = xi
+            self.tabla_estadistica.insert(0, column=self.__nombres_columnas_estadisticas__['mc'], value=xi)
             
             self.tabla_estadistica[self.__nombres_columnas_estadisticas__['mc']] = self.tabla_estadistica[self.__nombres_columnas_estadisticas__['mc']].apply(self.__marca_clase__)
 
