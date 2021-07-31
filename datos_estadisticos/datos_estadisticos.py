@@ -1,4 +1,3 @@
-'Estoy en branch creacion_tabla_estadistica'
 from io import UnsupportedOperation
 import pandas
 import numpy as np
@@ -13,6 +12,7 @@ class DatosEstadisticos:
 
     def __init__(self, datos, titulo, repr_xi, repr_fa, agrupados=False, columna_xi=0, columna_fa=0, xi_es_index=False, muestra=True):
         
+        self.datos = datos
         self.titulo = titulo
         self.agrupados = agrupados
         self.repr_xi = repr_xi
@@ -22,7 +22,24 @@ class DatosEstadisticos:
         self.xi_es_index = xi_es_index
         self.muestra = muestra
 
-        if type(datos) == list:
+        self.__dar_formato_datos__()
+
+        self.__quitar_xi_de_index__()
+        
+        self.__obtener_nombre_columnas__()
+
+        self.__obtener_xi_fa__()
+
+        self.__ordenar_datos__()
+
+        self.total_n = self.__total_n__()
+
+    def __dar_formato_datos__(self):
+        datos = self.datos
+        repr_xi = self.repr_xi
+        repr_fa = self.repr_fa
+        
+        if type(self.datos) == list:
             self.datos = pandas.DataFrame(datos)
         
         elif type(datos) == dict:
@@ -37,26 +54,13 @@ class DatosEstadisticos:
         
         else:
             self.datos = datos
-        
-        if xi_es_index == True or (len(self.datos.columns)  == 1 and self.agrupados == True):
+
+    def __quitar_xi_de_index__(self):
+        if self.xi_es_index == True or (len(self.datos.columns)  == 1 and self.agrupados == True):
             self.datos.reset_index(inplace= True)
             self.datos.rename(mapper = {self.datos.columns[0]: self.repr_xi}, axis='columns', inplace=True)
-            columna_fa = 1
             self.columna_fa = 1
-            xi_es_index = False
-            self.xi_es_index = False
-        
-
-        nombre_columnas = self.__obtener_nombre_columnas__()
-        self.nombre_columna_xi = nombre_columnas['xi']
-        self.nombre_columna_fa = nombre_columnas['fa']
-
-        self.xi = self.datos.loc[: , self.nombre_columna_xi]
-        self.fa = self.datos.loc[: , self.nombre_columna_fa]
-
-        self.__ordenar_datos__()
-
-        self.total_n = self.__total_n__()
+            self.xi_es_index = False                
 
     def __ordenar_datos__(self):
 
@@ -82,30 +86,32 @@ class DatosEstadisticos:
         #------- obtenemos nombre de columna "xi" -------
         # Si "xi" esta en el index
         if self.xi_es_index == True:
-            columna_xi_name = self.datos.index.name
+            self.nombre_columna_xi = self.datos.index.name
 
         else:
             # Si "xi" no esta en el index
             # Si "xi" es string
             if type_xi == str:
-                columna_xi_name = self.columna_xi
+                self.nombre_columna_xi = self.columna_xi
             
             # Si "xi" no esta en el index
             # Si "xi" es un numero
             else:
-                columna_xi_name = self.datos.iloc[:,self.columna_xi].name
+                self.nombre_columna_xi = self.datos.iloc[:,self.columna_xi].name
 
         #------- obtenemos nombre de columna "fa" -------
         # Si "fa" es string
         if type_fa == str:
-            columna_fa_name = self.columna_fa
+            self.nombre_columna_fa = self.columna_fa
 
         # Si "fa" es un numero
         else:
-            columna_fa_name = self.datos.iloc[:,self.columna_fa].name
+            self.nombre_columna_fa = self.datos.iloc[:,self.columna_fa].name
 
-        return {'xi':columna_xi_name, 'fa':columna_fa_name}    
-   
+    def __obtener_xi_fa__(self):
+        self.xi = self.datos.loc[: , self.nombre_columna_xi]
+        self.fa = self.datos.loc[: , self.nombre_columna_fa]
+
     def __total_n__(self):
 
         if self.agrupados == False:
@@ -1475,6 +1481,9 @@ class AnalisisEstadistico:
                     </table>
             </body>
             {self.tabla_estadistica._repr_html_()}'''
+
+
+
 
 
 
