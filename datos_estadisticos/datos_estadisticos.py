@@ -10,7 +10,7 @@ import unittest
 
 class DatosEstadisticos:
 
-    def __init__(self, datos, titulo, repr_xi, repr_fa, agrupados=False, columna_xi=0, columna_fa=0, xi_es_index=False, muestra=True):
+    def __init__(self, datos, titulo, repr_xi, repr_fa, repr_xi2=None, agrupados=False, columna_xi=0, columna_fa=0, columna_xi2=None, xi_es_index=False, muestra=True):
         
         self.datos = datos
         self.titulo = titulo
@@ -296,6 +296,7 @@ class DatosEstadisticos:
 
                 <p align="left">
                     <pre><strong><span style="font-size:110%">{'Datos Agrupados' if self.agrupados ==True else 'Datos No Agrupados'}</span></strong></br></pre>
+                    <pre><strong><span style="font-size:110%">{'Muestra' if self.muestra ==True else 'Poblacion'}</span></strong></br></pre>
                     <pre>Total n: <strong><span style="font-size:110%">{self.total_n}</span></strong> {self.repr_fa}</br></pre>
                 </p>
 
@@ -1049,6 +1050,7 @@ class AnalisisEstadistico:
     def info(self):
         titulo = self.__titulo__
         agrupados = self.__agrupados__
+        muestra = self.__muestra__
 
         total_n = self.__total_n__
         media = self.media
@@ -1094,6 +1096,7 @@ class AnalisisEstadistico:
             </h1>
             <p align="left">
             <pre><strong><span style="font-size:120%">{'Datos Agrupados' if agrupados == True else 'Datos no Agrupados'}</span></strong></br></pre>
+            <pre><strong><span style="font-size:120%">{'Muestra' if muestra == True else 'Poblacion'}</span></strong></br></pre>
             <pre>Total n : <strong><span style="font-size:90%">{total_n} {self.__repr_fa__}</span></strong></br></pre>
             </br>
             <pre><strong><span style="font-size:120%">Variable Aleatoria "Xi": ({self.__repr_xi__})</span></strong></br></pre>
@@ -1401,6 +1404,7 @@ class AnalisisEstadistico:
 
                 <p align="left">
                     <pre><strong><span style="font-size:110%">{'Datos Agrupados' if self.__agrupados__ ==True else 'Datos No Agrupados'}</span></strong></br></pre>
+                    <pre><strong><span style="font-size:110%">{'Muestra' if self.__muestra__ ==True else 'Poblacion'}</span></strong></br></pre>
                     <pre>Total n: <strong><span style="font-size:110%">{self.__total_n__}</span></strong> {self.__repr_fa__}</br></pre>
                 </p>
 
@@ -1446,6 +1450,7 @@ class AnalisisEstadistico:
 
                 <p align="left">
                     <pre><strong><span style="font-size:110%">{'Datos Agrupados' if self.__agrupados__ ==True else 'Datos No Agrupados'}</span></strong></br></pre>
+                    <pre><strong><span style="font-size:110%">{'Muestra' if self.__muestra__ ==True else 'Poblacion'}</span></strong></br></pre>
                     <pre>Total n: <strong><span style="font-size:110%">{self.__total_n__}</span></strong> {self.__repr_fa__}</br></pre>
                 </p>
 
