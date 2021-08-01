@@ -1,12 +1,12 @@
-from io import UnsupportedOperation
+import sys
+sys.path.append('C:\\Users\\gilbe\\github\\formulas_personales\\datos_estadisticos\\')
+sys.path.append('C:\\Users\\gilbe\\github\\formulas_personales\\')
 import pandas
-import numpy as np
 import copy
 from IPython.core.display import display, HTML
-from statistics import mean, median_grouped, median_high, variance, stdev, mode, multimode, quantiles, pvariance, pstdev
-
-from pandas.core import indexing
+from statistics import variance, mode, multimode, quantiles, pvariance
 from formulas_especiales import ceiling_to_a_number, floor_to_a_number
+import unittest
 
 class DatosEstadisticos:
 
@@ -676,7 +676,7 @@ class AnalisisEstadistico:
         ni = dataframe[1]
 
         resultado = ((xi - media)** 3) * ni
-
+    
         return resultado 
 
     def __medida_fisher_datos_agrupados__(self):
@@ -691,9 +691,9 @@ class AnalisisEstadistico:
         else:
             
             fisher = self.tabla_estadistica[[self.__nombre_columna_xi__, self.__nombre_columna_fa__]].apply(self.__sumatoria_xi_menos_media_por_ni_al_cubo__, args=[self.media], axis='columns')
-            
+        
         fisher = sum(fisher) / (N * (s ** 3))
-            
+        
         return fisher
 
     def __xi_menos_media_por_ni_exponencial__(self, dataframe, exponente):
@@ -1100,7 +1100,7 @@ class AnalisisEstadistico:
             <pre>media:                        <strong><span style="font-size:90%">{round(media, 4)}</span></strong></br></pre>
             <pre>mediana:                      <strong><span style="font-size:90%">{round(mediana, 4)}</span></strong></br></pre>
             <pre>moda:                         <strong><span style="font-size:90%">{round(moda, 4)}</span></strong></br></pre>
-            <pre>rango recorrido:              <strong><span style="font-size:90%">{rango_recorrido}</span></strong></br></pre>
+            <pre>rango recorrido:              <strong><span style="font-size:90%">{rango_recorrido if type(rango_recorrido) == str else round(rango_recorrido, 4)}</span></strong></br></pre>
             <pre>varianza:                     <strong><span style="font-size:90%">{round(varianza, 4)}</span></strong></br></pre>
             <pre>desviacion tipica:            <strong><span style="font-size:90%">{round(stdev, 4)}</span></strong></br></pre>
             <pre>coeficiente variacion:        <strong><span style="font-size:90%">{round(cv, 4)} ({interpretacion_cv})</span></strong></br></pre>
@@ -1193,7 +1193,10 @@ class AnalisisEstadistico:
                     
                     
                     # Frecuencia absoluta acumulada del intervalo de la mediana anterior                    
-                    faa_intervalo_cuantil_anterior = self.tabla_estadistica.iloc[index_cuantiles[nombre_index_cuantil]-1].loc[self.__nombres_columnas_estadisticas__['faa']]
+                    if index_cuantiles[nombre_index_cuantil] == 0:
+                        faa_intervalo_cuantil_anterior = 0
+                    else:
+                        faa_intervalo_cuantil_anterior = self.tabla_estadistica.iloc[index_cuantiles[nombre_index_cuantil]-1].loc[self.__nombres_columnas_estadisticas__['faa']]
                     
                     
                     # Frecuencia absoluta del intervalo de la mediana                    
@@ -1484,19 +1487,111 @@ class AnalisisEstadistico:
 
 
 
+class PruebasCajaCristal(unittest.TestCase):
+    
+    # No agrupados
+    def test_media_no_agrupados(self):
+        resultado = ae_longitud.media
+        self.assertEqual(round(resultado,4), 13.4498)
+    
+    def test_mediana_no_agrupados(self):
+        resultado = ae_longitud.mediana
+        self.assertEqual(round(resultado,4), 13.453)
+
+    def test_moda_no_agrupados(self):
+        resultado = ae_longitud.moda
+        self.assertEqual(round(resultado,4), 13.455)
+
+    def test_varianza_no_agrupados(self):
+        resultado = ae_longitud.varianza
+        self.assertEqual(round(resultado,4), 0.0002)
+    
+    def test_desviacion_estandar_no_agrupados(self):
+        resultado = ae_longitud.desviacion_estandar
+        self.assertEqual(round(resultado,4), 0.0136)
+
+    def test_rango_recorrido_no_agrupados(self):
+        resultado = ae_longitud.rango_recorrido
+        self.assertEqual(round(resultado,4), 0.061)
+
+    def test_cuartil1_no_agrupados(self):
+        resultado = ae_longitud.cuantiles()['Q1']
+        self.assertEqual(round(resultado,3), 13.445)
+
+    def test_cuartil3_no_agrupados(self):
+        resultado = ae_longitud.cuantiles()['Q3']
+        self.assertEqual(round(resultado,3), 13.457)
+
+    def test_decil9_no_agrupados(self):
+        resultado = ae_longitud.cuantiles(n=10)['Q9']
+        self.assertEqual(round(resultado,4), 13.4615)
 
 
+    # Agrupados sin Intervalos
+    def test_media_agrupados(self):
+        resultado = ae_longitud_agrupados.media
+        self.assertEqual(round(resultado,4), 13.4498)
+    
+    def test_asimetria_pearson_agrupados(self):
+        resultado = ae_longitud_agrupados.coeficiente_pearson
+        self.assertEqual(round(resultado,4), -0.3975)
+    
+    def test_medida_fisher_agrupados(self):
+        resultado = ae_longitud_agrupados.medida_fisher
+        self.assertEqual(round(resultado,4), -2.4338)
+
+
+    # Agrupados con Intervalos
+    def test_media_intervalos(self):
+        resultado = ae_ejemplo_intervalos.media
+        self.assertEqual(round(resultado,2), 21.88)
+
+    def test_varianza_intervalos(self):
+        resultado = ae_ejemplo_intervalos.varianza
+        self.assertEqual(round(resultado,2), 59.12)
+
+    def test_desviacion_estandar_intervalos(self):
+        resultado = ae_ejemplo_intervalos.desviacion_estandar
+        self.assertEqual(round(resultado,2), 7.69)
+
+    def test_mediana_intervalos(self):
+        resultado = ae_ejemplo_intervalos.mediana
+        self.assertEqual(round(resultado,4), 21.0625)
+    
+    def test_cuartil1_intervalos(self):
+        resultado = ae_ejemplo_intervalos.cuantiles()['Q1']
+        self.assertEqual(round(resultado,2), 16.21)
+
+    def test_cuartil3_intervalos(self):
+        resultado = ae_ejemplo_intervalos.cuantiles()['Q3']
+        self.assertEqual(round(resultado,2), 24.97)
+
+    def test_percentil10_intervalos(self):
+        resultado = ae_ejemplo_intervalos.cuantiles(n=100)['Q10']
+        self.assertEqual(round(resultado,2), 12.60)
+
+    def test_asimetria_fisher_intervalos(self):
+        resultado = ae_ejemplo_intervalos.medida_fisher
+        self.assertEqual(round(resultado,2), 1.03)
 
 if '__main__' == __name__:
 
-    saltos = [
-    283.6, 269.4, 262.2, 261.1, 246.7, 245.5, 239.2, 233.7, 230.3, 227.9, 
-    226.4, 225.5, 224.1, 223.6, 222.3, 221.4, 217.8, 217.2, 216.9, 211.6,
-    211.4, 208.5, 204.9, 202.7, 202.4, 200.5, 198.5, 182.4, 111
-    ]
+    # Ejemplo sin intervalos
+    longitud = pandas.Series(
+        [13.404, 13.443, 13.445, 13.447, 13.449, 13.450, 13.453, 13.455, 
+        13.457, 13.460, 13.460, 13.465, 13.455, 13.453, 13.445, 13.455], name='metros')
 
-    saltos = pandas.DataFrame(saltos, columns = ['saltos'])
+    longitud = DatosEstadisticos(longitud, 'Mediciones de la longitud de dos puntos', repr_xi='metros', repr_fa='mediciones')
+    ae_longitud = AnalisisEstadistico(longitud)
+    ae_longitud_agrupados = AnalisisEstadistico(longitud.agrupar(0))
 
-    de_saltos = AnalisisEstadistico(saltos, 'Resultados de Saltos de Esqui Masculino')
+    # Ejemplo con intervalos
+    intervalos_ejemplo = pandas.Series([(10,15), (15, 20), (20, 25), (25, 30), (30, 35), (35, 40), (40, 45), (45, 50)], name= 'Intervalos')
+    ni_ejemplo = pandas.Series([48, 60, 80, 30, 13, 10, 6, 3], name= 'ni')
+    ejemplo_intervalos = pandas.concat([intervalos_ejemplo, ni_ejemplo], axis='columns')
+    de_ejemplo_intervalos = DatosEstadisticos(ejemplo_intervalos, 'Ejemplo Intervalos', repr_xi='rango intervalos', repr_fa='ni', columna_xi='Intervalos', columna_fa='ni', agrupados=True)
+    ae_ejemplo_intervalos = AnalisisEstadistico(de_ejemplo_intervalos)
 
-    print(de_saltos)
+
+
+    unittest.main()
