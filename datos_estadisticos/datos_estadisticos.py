@@ -9,18 +9,41 @@ from formulas_especiales import ceiling_to_a_number, floor_to_a_number
 import unittest
 
 class DatosEstadisticos:
-
-    def __init__(self, datos, titulo, repr_xi, repr_fa, repr_xi2=None, agrupados=False, columna_xi=0, columna_fa=0, columna_xi2=None, xi_es_index=False, muestra=True):
-        
+    def __init__(self, datos, titulo, repr_xi, repr_fa, agrupados, columna_xi, columna_fa, xi_es_index, muestra):
         self.datos = datos
         self.titulo = titulo
-        self.agrupados = agrupados
         self.repr_xi = repr_xi
-        self.columna_xi = columna_xi
         self.repr_fa = repr_fa
+        self.agrupados = agrupados
+        self.columna_xi = columna_xi
         self.columna_fa = columna_fa
         self.xi_es_index = xi_es_index
         self.muestra = muestra
+
+    def __total_n__(self):
+
+            if self.agrupados == False:
+                total_n = len(self.xi)
+            
+            else:
+                total_n = self.fa.sum()
+
+            return total_n
+
+
+class DatosUnivariada(DatosEstadisticos):
+
+    def __init__(self, datos, titulo, repr_xi, repr_fa, agrupados=False, columna_xi=0, columna_fa=0, xi_es_index=False, muestra=True):
+        
+        super().__init__(datos, titulo, repr_xi, repr_fa, agrupados, columna_xi, columna_fa, xi_es_index, muestra)
+        #super().__init__(datos, titulo, muestra, agrupados)
+
+        #self.repr_xi = repr_xi
+        #self.columna_xi = columna_xi
+        #self.repr_fa = repr_fa
+        #self.columna_fa = columna_fa
+        #self.xi_es_index = xi_es_index
+
 
         self.__dar_formato_datos__()
 
@@ -51,12 +74,13 @@ class DatosEstadisticos:
 
         elif type(datos) == pandas.Series:
             self.datos = datos.to_frame()
-        
+    
         else:
             self.datos = datos
 
     def __quitar_xi_de_index__(self):
-        if self.xi_es_index == True or (len(self.datos.columns)  == 1 and self.agrupados == True):
+        if (self.xi_es_index == True) or (len(self.datos.columns)  == 1 and self.agrupados == True):
+            
             self.datos.reset_index(inplace= True)
             self.datos.rename(mapper = {self.datos.columns[0]: self.repr_xi}, axis='columns', inplace=True)
             self.columna_fa = 1
@@ -111,16 +135,6 @@ class DatosEstadisticos:
     def __obtener_xi_fa__(self):
         self.xi = self.datos.loc[: , self.nombre_columna_xi]
         self.fa = self.datos.loc[: , self.nombre_columna_fa]
-
-    def __total_n__(self):
-
-        if self.agrupados == False:
-            total_n = len(self.xi)
-        
-        else:
-            total_n = self.fa.sum()
-
-        return total_n
 
     def __creacion_intervalos__(self, rango_intervalos):
         '''
@@ -382,20 +396,296 @@ class DatosEstadisticos:
             {self.datos._repr_html_()}'''
 
 
+
+
+class DatosBivariada(DatosEstadisticos):
+    def __init__(self, datos, titulo, repr_xi, repr_xi2, repr_fa, columna_xi, columna_xi2, columna_fa=0, muestra=True, agrupados=False, xi_es_index=False):
+        super().__init__(datos, titulo, repr_xi, repr_fa, agrupados, columna_xi, columna_fa, xi_es_index, muestra)
+        
+        self.repr_xi1 = repr_xi
+        self.repr_xi2 = repr_xi2
+        self.repr_fa = repr_fa
+        self.columna_xi1 = columna_xi
+        self.columna_xi2 = columna_xi2
+        self.columna_fa = columna_fa
+        
+        self.__dar_formato_datos__()
+        self.__obtener_nombre_columnas__()
+        self.__obtener_xi_fa__()
+
+        self.total_n = self.__total_n__()
+
+    def __dar_formato_datos__(self):
+        datos = self.datos
+        repr_xi1 = self.repr_xi1
+        repr_xi2 = self.repr_xi2
+        repr_fa = self.repr_fa
+        
+        if type(self.datos) == list:
+            self.datos = pandas.DataFrame(datos)
+        
+        elif type(datos) == dict:
+            self.datos = pandas.Series(datos, name=repr_xi1)
+            self.datos = pandas.DataFrame(self.datos)
+            self.datos[repr_fa] = self.datos.index
+            self.datos = self.datos.reset_index(drop=True)
+            self.datos.set_index(repr_fa, inplace=True)
+
+        elif type(datos) == pandas.Series:
+            self.datos = datos.to_frame()
+    
+        else:
+            self.datos = datos
+
+    def __obtener_nombre_columnas__(self):
+        '''
+        Funcion.-   Obtiene el nombre de las columnas xi y fa de un DataFrame para futuras referencias en 
+                    formulas estadisticas   
+        Input:
+            dataframe
+        Output:
+            (nombre columna "xi", nombre columna "fa")
+        '''
+
+        type_xi = type(self.columna_xi)
+        type_fa = type(self.columna_fa)
+        
+        #------- obtenemos nombre de columna "xi" -------
+        # Si "xi" esta en el index
+        if self.xi_es_index == True:
+            self.nombre_columna_xi = self.datos.index.name
+
+        else:
+            # Si "xi" no esta en el index
+            # Si "xi" es string
+            if type_xi == str:
+                self.nombre_columna_xi = self.columna_xi
+            
+            # Si "xi" no esta en el index
+            # Si "xi" es un numero
+            else:
+                self.nombre_columna_xi = self.datos.iloc[:,self.columna_xi].name
+
+        #------- obtenemos nombre de columna "fa" -------
+        # Si "fa" es string
+        if type_fa == str:
+            self.nombre_columna_fa = self.columna_fa
+
+        # Si "fa" es un numero
+        else:
+            self.nombre_columna_fa = self.datos.iloc[:,self.columna_fa].name
+
+    def __obtener_xi_fa__(self):
+        self.xi = self.datos.loc[: , self.nombre_columna_xi]
+        self.fa = self.datos.loc[: , self.nombre_columna_fa]
+
+    def _repr_html_(self):
+        if type(self.datos) == DatosUnivariada:
+
+            if self.agrupados == False:
+                return f'''
+                <body>
+                    <h1>
+                        {self.titulo}
+                    </h1>
+
+                    <p align="left">
+                        <pre><strong><span style="font-size:110%">{'Datos Agrupados' if self.agrupados ==True else 'Datos No Agrupados'}</span></strong></br></pre>
+                        <pre><strong><span style="font-size:110%">{'Muestra' if self.muestra ==True else 'Poblacion'}</span></strong></br></pre>
+                        <pre>Total n: <strong><span style="font-size:110%">{self.total_n}</span></strong> {self.repr_fa}</br></pre>
+                    </p>
+
+                    <table border="1" align="center" cellspacing="0" cellpadding="5">
+                        <tr valign="bottom" align="center">
+                            <th width="300"><pre><span style="font-size:110%">Variable Aleatoria (Xi)</span></br></pre></pre></th>
+                            <th width="300"><pre><span style="font-size:110%">Elementos (ni)</span></br></pre></pre></th>	
+                        </tr>
+                        <tr>
+                            <td>
+                                <table border="1" align="center" cellspacing="0" cellpadding="5"  width="300"  height="20">
+                                    <tr>
+                                    <td> Representa:</td>
+                                    <td><strong> {self.repr_xi}</strong></td>
+                                    </tr>
+                                    <tr>
+                                    <td> Columna Xi:</td>
+                                    <td><strong> {self.nombre_columna_xi}</strong></td>
+                                    </tr>
+                                </table>
+                            </td>
+                            <td>
+                                <table border="1" align="center" cellspacing="0" cellpadding="5"  width="300"  height="20">
+                                <tr>
+                                    <td>Representa:</td>
+                                    <td><strong> {self.repr_fa}</strong></td>
+                                    </tr>
+                                </table>
+                            </td>	
+                        </tr>
+                        <tr>
+                        </table>
+                </body>
+                {self.datos._repr_html_()}
+                '''
+
+            else:
+                return f'''
+                <body>
+                    <h1>
+                        {self.titulo}
+                    </h1>
+
+                    <p align="left">
+                        <pre><strong><span style="font-size:110%">{'Datos Agrupados' if self.agrupados ==True else 'Datos No Agrupados'}</span></strong></br></pre>
+                        <pre>Total n: <strong><span style="font-size:110%">{self.total_n}</span></strong> {self.repr_fa}</br></pre>
+                    </p>
+
+                    <table border="1" align="center" cellspacing="0" cellpadding="5">
+                        <tr valign="bottom" align="center">
+                            <th width="300"><pre><span style="font-size:110%">Variable Aleatoria (Xi)</span></br></pre></pre></th>
+                            <th width="300"><pre><span style="font-size:110%">Elementos (Fa/ni)</span></br></pre></pre></th>	
+                        </tr>
+                        <tr>
+                            <td>
+                                <table border="1" align="center" cellspacing="0" cellpadding="5"  width="300"  height="20">
+                                    <tr>
+                                    <td> Representa:</td>
+                                    <td><strong> {self.repr_xi}</strong></td>
+                                    </tr>
+                                    <tr>
+                                    <td> Columna Xi:</td>
+                                    <td><strong> {self.nombre_columna_xi}</strong></td>
+                                    </tr>
+                                </table>
+                            </td>
+                            <td>
+                                <table border="1" align="center" cellspacing="0" cellpadding="5"  width="300"  height="20">
+                                <tr>
+                                    <td> Representa:</td>
+                                    <td><strong> {self.repr_fa}</strong></td>
+                                    </tr>
+                                    <tr>
+                                    <td> Columna Fa:</td>
+                                    <td><strong> {self.nombre_columna_fa}</strong></td>
+                                    </tr>
+                                </table>
+                            </td>	
+                        </tr>
+                        <tr>
+                        </table>
+                </body>
+                {self.datos._repr_html_()}'''
+
+        else:
+            if self.agrupados == False:
+                return f'''
+                <body>
+                    <h1>
+                        {self.titulo}
+                    </h1>
+
+                    <p align="left">
+                        <pre><strong><span style="font-size:110%">{'Datos Agrupados' if self.agrupados ==True else 'Datos No Agrupados'}</span></strong></br></pre>
+                        <pre><strong><span style="font-size:110%">{'Muestra' if self.muestra ==True else 'Poblacion'}</span></strong></br></pre>
+                        <pre>Total n: <strong><span style="font-size:110%">{self.total_n}</span></strong> {self.repr_fa}</br></pre>
+                    </p>
+
+                    <table border="1" align="center" cellspacing="0" cellpadding="5">
+                        <tr valign="bottom" align="center">
+                            <th width="300"><pre><span style="font-size:110%">Variable Aleatoria (Xi)</span></br></pre></pre></th>
+                            <th width="300"><pre><span style="font-size:110%">Elementos (ni)</span></br></pre></pre></th>	
+                        </tr>
+                        <tr>
+                            <td>
+                                <table border="1" align="center" cellspacing="0" cellpadding="5"  width="300"  height="20">
+                                    <tr>
+                                    <td> Representa:</td>
+                                    <td><strong> {self.repr_xi}</strong></td>
+                                    </tr>
+                                    <tr>
+                                    <td> Columna Xi:</td>
+                                    <td><strong> {self.nombre_columna_xi}</strong></td>
+                                    </tr>
+                                </table>
+                            </td>
+                            <td>
+                                <table border="1" align="center" cellspacing="0" cellpadding="5"  width="300"  height="20">
+                                <tr>
+                                    <td>Representa:</td>
+                                    <td><strong> {self.repr_fa}</strong></td>
+                                    </tr>
+                                </table>
+                            </td>	
+                        </tr>
+                        <tr>
+                        </table>
+                </body>
+                {self.datos._repr_html_()}
+                '''
+
+            else:
+                return f'''
+                <body>
+                    <h1>
+                        {self.titulo}
+                    </h1>
+
+                    <p align="left">
+                        <pre><strong><span style="font-size:110%">{'Datos Agrupados' if self.agrupados ==True else 'Datos No Agrupados'}</span></strong></br></pre>
+                        <pre>Total n: <strong><span style="font-size:110%">{self.total_n}</span></strong> {self.repr_fa}</br></pre>
+                    </p>
+
+                    <table border="1" align="center" cellspacing="0" cellpadding="5">
+                        <tr valign="bottom" align="center">
+                            <th width="300"><pre><span style="font-size:110%">Variable Aleatoria (Xi)</span></br></pre></pre></th>
+                            <th width="300"><pre><span style="font-size:110%">Elementos (Fa/ni)</span></br></pre></pre></th>	
+                        </tr>
+                        <tr>
+                            <td>
+                                <table border="1" align="center" cellspacing="0" cellpadding="5"  width="300"  height="20">
+                                    <tr>
+                                    <td> Representa:</td>
+                                    <td><strong> {self.repr_xi}</strong></td>
+                                    </tr>
+                                    <tr>
+                                    <td> Columna Xi:</td>
+                                    <td><strong> {self.nombre_columna_xi}</strong></td>
+                                    </tr>
+                                </table>
+                            </td>
+                            <td>
+                                <table border="1" align="center" cellspacing="0" cellpadding="5"  width="300"  height="20">
+                                <tr>
+                                    <td> Representa:</td>
+                                    <td><strong> {self.repr_fa}</strong></td>
+                                    </tr>
+                                    <tr>
+                                    <td> Columna Fa:</td>
+                                    <td><strong> {self.nombre_columna_fa}</strong></td>
+                                    </tr>
+                                </table>
+                            </td>	
+                        </tr>
+                        <tr>
+                        </table>
+                </body>
+                {self.datos._repr_html_()}'''
+
+
 class AnalisisEstadistico:
     '''
     Analiza descriptivamente los datos.
 
-    datos. - solo acepta un objeto de DatosEstadisticos.
+    datos. - solo acepta un objeto de DatosUnivariada.
     '''
     def __init__(self, datos):
         
-        if type(datos) == DatosEstadisticos:
+        if type(datos) == DatosUnivariada:
             
             self.__copiar_parametros__(datos)
 
         else:
-            raise TypeError('Solo acepta objeto DatosEstadisticos')
+            raise TypeError('Solo acepta objeto DatosUnivariada')
 
 
         self.__establecer_nombres_columnas_estadisticas__()
@@ -1395,6 +1685,7 @@ class AnalisisEstadistico:
         '''
 
     def _repr_html_(self):
+
         if self.__agrupados__ == False:
             return f'''
             <body>
@@ -1428,7 +1719,7 @@ class AnalisisEstadistico:
                         </td>
                         <td>
                             <table border="1" align="center" cellspacing="0" cellpadding="5"  width="300"  height="20">
-                               <tr>
+                            <tr>
                                 <td>Representa:</td>
                                 <td><strong> {self.__repr_fa__}</strong></td>
                                 </tr>
@@ -1474,7 +1765,7 @@ class AnalisisEstadistico:
                         </td>
                         <td>
                             <table border="1" align="center" cellspacing="0" cellpadding="5"  width="300"  height="20">
-                               <tr>
+                            <tr>
                                 <td> Representa:</td>
                                 <td><strong> {self.__repr_fa__}</strong></td>
                                 </tr>
@@ -1489,7 +1780,6 @@ class AnalisisEstadistico:
                     </table>
             </body>
             {self.tabla_estadistica._repr_html_()}'''
-
 
 
 class PruebasCajaCristal(unittest.TestCase):
@@ -1586,7 +1876,7 @@ if '__main__' == __name__:
         [13.404, 13.443, 13.445, 13.447, 13.449, 13.450, 13.453, 13.455, 
         13.457, 13.460, 13.460, 13.465, 13.455, 13.453, 13.445, 13.455], name='metros')
 
-    longitud = DatosEstadisticos(longitud, 'Mediciones de la longitud de dos puntos', repr_xi='metros', repr_fa='mediciones')
+    longitud = DatosUnivariada(longitud, 'Mediciones de la longitud de dos puntos', repr_xi='metros', repr_fa='mediciones')
     ae_longitud = AnalisisEstadistico(longitud)
     ae_longitud_agrupados = AnalisisEstadistico(longitud.agrupar(0))
 
@@ -1594,7 +1884,7 @@ if '__main__' == __name__:
     intervalos_ejemplo = pandas.Series([(10,15), (15, 20), (20, 25), (25, 30), (30, 35), (35, 40), (40, 45), (45, 50)], name= 'Intervalos')
     ni_ejemplo = pandas.Series([48, 60, 80, 30, 13, 10, 6, 3], name= 'ni')
     ejemplo_intervalos = pandas.concat([intervalos_ejemplo, ni_ejemplo], axis='columns')
-    de_ejemplo_intervalos = DatosEstadisticos(ejemplo_intervalos, 'Ejemplo Intervalos', repr_xi='rango intervalos', repr_fa='ni', columna_xi='Intervalos', columna_fa='ni', agrupados=True)
+    de_ejemplo_intervalos = DatosUnivariada(ejemplo_intervalos, 'Ejemplo Intervalos', repr_xi='rango intervalos', repr_fa='ni', columna_xi='Intervalos', columna_fa='ni', agrupados=True)
     ae_ejemplo_intervalos = AnalisisEstadistico(de_ejemplo_intervalos)
 
 
