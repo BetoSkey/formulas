@@ -301,6 +301,7 @@ class DatosUnivariada(DatosEstadisticos):
         return self
 
     def _repr_html_(self):
+        
         if self.agrupados == False:
             return f'''
             <body>
@@ -448,9 +449,10 @@ class DatosBivariada(DatosEstadisticos):
         '''
 
         type_xi = type(self.columna_xi)
+        type_xi2 = type(self.columna_xi2)
         type_fa = type(self.columna_fa)
         
-        #------- obtenemos nombre de columna "xi" -------
+        #------- obtenemos nombre de columna "xi1" -------
         # Si "xi" esta en el index
         if self.xi_es_index == True:
             self.nombre_columna_xi = self.datos.index.name
@@ -465,6 +467,15 @@ class DatosBivariada(DatosEstadisticos):
             # Si "xi" es un numero
             else:
                 self.nombre_columna_xi = self.datos.iloc[:,self.columna_xi].name
+
+        #------- obtenemos nombre de columna "xi2" -------
+        # Si "xi2" es string
+        if type_xi2 == str:
+            self.nombre_columna_xi2 = self.columna_xi2
+
+        # Si "xi2" es un numero
+        else:
+            self.nombre_columna_xi2 = self.datos.iloc[:,self.columna_xi2].name
 
         #------- obtenemos nombre de columna "fa" -------
         # Si "fa" es string
@@ -497,7 +508,8 @@ class DatosBivariada(DatosEstadisticos):
 
                     <table border="1" align="center" cellspacing="0" cellpadding="5">
                         <tr valign="bottom" align="center">
-                            <th width="300"><pre><span style="font-size:110%">Variable Aleatoria (Xi)</span></br></pre></pre></th>
+                            <th width="300"><pre><span style="font-size:110%">Variable Aleatoria (Xi1)</span></br></pre></pre></th>
+                            <th width="300"><pre><span style="font-size:110%">Variable Aleatoria (Xi2)</span></br></pre></pre></th>
                             <th width="300"><pre><span style="font-size:110%">Elementos (ni)</span></br></pre></pre></th>	
                         </tr>
                         <tr>
@@ -510,6 +522,18 @@ class DatosBivariada(DatosEstadisticos):
                                     <tr>
                                     <td> Columna Xi:</td>
                                     <td><strong> {self.nombre_columna_xi}</strong></td>
+                                    </tr>
+                                </table>
+                            </td>
+                            <td>
+                                <table border="1" align="center" cellspacing="0" cellpadding="5"  width="300"  height="20">
+                                    <tr>
+                                    <td> Representa:</td>
+                                    <td><strong> {self.repr_xi2}</strong></td>
+                                    </tr>
+                                    <tr>
+                                    <td> Columna Xi2:</td>
+                                    <td><strong> {self.nombre_columna_xi2}</strong></td>
                                     </tr>
                                 </table>
                             </td>
@@ -542,7 +566,8 @@ class DatosBivariada(DatosEstadisticos):
 
                     <table border="1" align="center" cellspacing="0" cellpadding="5">
                         <tr valign="bottom" align="center">
-                            <th width="300"><pre><span style="font-size:110%">Variable Aleatoria (Xi)</span></br></pre></pre></th>
+                            <th width="300"><pre><span style="font-size:110%">Variable Aleatoria (Xi1)</span></br></pre></pre></th>
+                            <th width="300"><pre><span style="font-size:110%">Variable Aleatoria (Xi2)</span></br></pre></pre></th>
                             <th width="300"><pre><span style="font-size:110%">Elementos (Fa/ni)</span></br></pre></pre></th>	
                         </tr>
                         <tr>
@@ -558,6 +583,18 @@ class DatosBivariada(DatosEstadisticos):
                                     </tr>
                                 </table>
                             </td>
+                            <td>
+                                <table border="1" align="center" cellspacing="0" cellpadding="5"  width="300"  height="20">
+                                    <tr>
+                                    <td> Representa:</td>
+                                    <td><strong> {self.repr_xi2}</strong></td>
+                                    </tr>
+                                    <tr>
+                                    <td> Columna Xi:</td>
+                                    <td><strong> {self.nombre_columna_xi2}</strong></td>
+                                    </tr>
+                                </table>
+                            </td>                            
                             <td>
                                 <table border="1" align="center" cellspacing="0" cellpadding="5"  width="300"  height="20">
                                 <tr>
