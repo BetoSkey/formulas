@@ -1,3 +1,4 @@
+'Estoy en branch bivariada'
 import sys
 sys.path.append('C:\\Users\\gilbe\\github\\formulas_personales\\datos_estadisticos\\')
 sys.path.append('C:\\Users\\gilbe\\github\\formulas_personales\\')
