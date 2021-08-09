@@ -22,11 +22,12 @@ class DatosEstadisticos:
         self.muestra = muestra
 
     def __total_n__(self):
-
+            
             if self.agrupados == False:
                 total_n = len(self.xi)
             
             else:
+                print('aqui')
                 total_n = self.fa.sum()
 
             return total_n
@@ -492,222 +493,126 @@ class DatosBivariada(DatosEstadisticos):
         self.fa = self.datos.loc[: , self.nombre_columna_fa]
 
     def _repr_html_(self):
-        if type(self.datos) == DatosUnivariada:
 
-            if self.agrupados == False:
-                return f'''
-                <body>
-                    <h1>
-                        {self.titulo}
-                    </h1>
+        if self.agrupados == False:
+            return f'''
+            <body>
+                <h1>
+                    {self.titulo}
+                </h1>
 
-                    <p align="left">
-                        <pre><strong><span style="font-size:110%">{'Datos Agrupados' if self.agrupados ==True else 'Datos No Agrupados'}</span></strong></br></pre>
-                        <pre><strong><span style="font-size:110%">{'Muestra' if self.muestra ==True else 'Poblacion'}</span></strong></br></pre>
-                        <pre>Total n: <strong><span style="font-size:110%">{self.total_n}</span></strong> {self.repr_fa}</br></pre>
-                    </p>
+                <p align="left">
+                    <pre><strong><span style="font-size:110%">{'Datos Agrupados' if self.agrupados ==True else 'Datos No Agrupados'}</span></strong></br></pre>
+                    <pre><strong><span style="font-size:110%">{'Muestra' if self.muestra ==True else 'Poblacion'}</span></strong></br></pre>
+                    <pre>Total n: <strong><span style="font-size:110%">{self.total_n}</span></strong> {self.repr_fa}</br></pre>
+                </p>
 
-                    <table border="1" align="center" cellspacing="0" cellpadding="5">
-                        <tr valign="bottom" align="center">
-                            <th width="300"><pre><span style="font-size:110%">Variable Aleatoria (Xi1)</span></br></pre></pre></th>
-                            <th width="300"><pre><span style="font-size:110%">Variable Aleatoria (Xi2)</span></br></pre></pre></th>
-                            <th width="300"><pre><span style="font-size:110%">Elementos (ni)</span></br></pre></pre></th>	
-                        </tr>
-                        <tr>
-                            <td>
-                                <table border="1" align="center" cellspacing="0" cellpadding="5"  width="300"  height="20">
-                                    <tr>
-                                    <td> Representa:</td>
-                                    <td><strong> {self.repr_xi}</strong></td>
-                                    </tr>
-                                    <tr>
-                                    <td> Columna Xi:</td>
-                                    <td><strong> {self.nombre_columna_xi}</strong></td>
-                                    </tr>
-                                </table>
-                            </td>
-                            <td>
-                                <table border="1" align="center" cellspacing="0" cellpadding="5"  width="300"  height="20">
-                                    <tr>
-                                    <td> Representa:</td>
-                                    <td><strong> {self.repr_xi2}</strong></td>
-                                    </tr>
-                                    <tr>
-                                    <td> Columna Xi2:</td>
-                                    <td><strong> {self.nombre_columna_xi2}</strong></td>
-                                    </tr>
-                                </table>
-                            </td>
-                            <td>
-                                <table border="1" align="center" cellspacing="0" cellpadding="5"  width="300"  height="20">
+                <table border="1" align="center" cellspacing="0" cellpadding="5">
+                    <tr valign="bottom" align="center">
+                        <th width="300"><pre><span style="font-size:110%">Variable Aleatoria (Xi1)</span></br></pre></pre></th>
+                        <th width="300"><pre><span style="font-size:110%">Variable Aleatoria (Xi2)</span></br></pre></pre></th>
+                        <th width="300"><pre><span style="font-size:110%">Elementos (ni)</span></br></pre></pre></th>	
+                    </tr>
+                    <tr>
+                        <td>
+                            <table border="1" align="center" cellspacing="0" cellpadding="5"  width="300"  height="20">
                                 <tr>
-                                    <td>Representa:</td>
-                                    <td><strong> {self.repr_fa}</strong></td>
-                                    </tr>
-                                </table>
-                            </td>	
-                        </tr>
-                        <tr>
-                        </table>
-                </body>
-                {self.datos._repr_html_()}
-                '''
-
-            else:
-                return f'''
-                <body>
-                    <h1>
-                        {self.titulo}
-                    </h1>
-
-                    <p align="left">
-                        <pre><strong><span style="font-size:110%">{'Datos Agrupados' if self.agrupados ==True else 'Datos No Agrupados'}</span></strong></br></pre>
-                        <pre>Total n: <strong><span style="font-size:110%">{self.total_n}</span></strong> {self.repr_fa}</br></pre>
-                    </p>
-
-                    <table border="1" align="center" cellspacing="0" cellpadding="5">
-                        <tr valign="bottom" align="center">
-                            <th width="300"><pre><span style="font-size:110%">Variable Aleatoria (Xi1)</span></br></pre></pre></th>
-                            <th width="300"><pre><span style="font-size:110%">Variable Aleatoria (Xi2)</span></br></pre></pre></th>
-                            <th width="300"><pre><span style="font-size:110%">Elementos (Fa/ni)</span></br></pre></pre></th>	
-                        </tr>
-                        <tr>
-                            <td>
-                                <table border="1" align="center" cellspacing="0" cellpadding="5"  width="300"  height="20">
-                                    <tr>
-                                    <td> Representa:</td>
-                                    <td><strong> {self.repr_xi}</strong></td>
-                                    </tr>
-                                    <tr>
-                                    <td> Columna Xi:</td>
-                                    <td><strong> {self.nombre_columna_xi}</strong></td>
-                                    </tr>
-                                </table>
-                            </td>
-                            <td>
-                                <table border="1" align="center" cellspacing="0" cellpadding="5"  width="300"  height="20">
-                                    <tr>
-                                    <td> Representa:</td>
-                                    <td><strong> {self.repr_xi2}</strong></td>
-                                    </tr>
-                                    <tr>
-                                    <td> Columna Xi:</td>
-                                    <td><strong> {self.nombre_columna_xi2}</strong></td>
-                                    </tr>
-                                </table>
-                            </td>                            
-                            <td>
-                                <table border="1" align="center" cellspacing="0" cellpadding="5"  width="300"  height="20">
+                                <td> Representa:</td>
+                                <td><strong> {self.repr_xi}</strong></td>
+                                </tr>
                                 <tr>
-                                    <td> Representa:</td>
-                                    <td><strong> {self.repr_fa}</strong></td>
-                                    </tr>
-                                    <tr>
-                                    <td> Columna Fa:</td>
-                                    <td><strong> {self.nombre_columna_fa}</strong></td>
-                                    </tr>
-                                </table>
-                            </td>	
-                        </tr>
-                        <tr>
-                        </table>
-                </body>
-                {self.datos._repr_html_()}'''
+                                <td> Columna Xi:</td>
+                                <td><strong> {self.nombre_columna_xi}</strong></td>
+                                </tr>
+                            </table>
+                        </td>
+                        <td>
+                            <table border="1" align="center" cellspacing="0" cellpadding="5"  width="300"  height="20">
+                                <tr>
+                                <td> Representa:</td>
+                                <td><strong> {self.repr_xi2}</strong></td>
+                                </tr>
+                                <tr>
+                                <td> Columna Xi:</td>
+                                <td><strong> {self.nombre_columna_xi2}</strong></td>
+                                </tr>
+                            </table>
+                        </td>                            
+                        <td>
+                            <table border="1" align="center" cellspacing="0" cellpadding="5"  width="300"  height="20">
+                            <tr>
+                                <td>Representa:</td>
+                                <td><strong> {self.repr_fa}</strong></td>
+                                </tr>
+                            </table>
+                        </td>	
+                    </tr>
+                    <tr>
+                    </table>
+            </body>
+            {self.datos._repr_html_()}
+            '''
 
         else:
-            if self.agrupados == False:
-                return f'''
-                <body>
-                    <h1>
-                        {self.titulo}
-                    </h1>
+            return f'''
+            <body>
+                <h1>
+                    {self.titulo}
+                </h1>
 
-                    <p align="left">
-                        <pre><strong><span style="font-size:110%">{'Datos Agrupados' if self.agrupados ==True else 'Datos No Agrupados'}</span></strong></br></pre>
-                        <pre><strong><span style="font-size:110%">{'Muestra' if self.muestra ==True else 'Poblacion'}</span></strong></br></pre>
-                        <pre>Total n: <strong><span style="font-size:110%">{self.total_n}</span></strong> {self.repr_fa}</br></pre>
-                    </p>
+                <p align="left">
+                    <pre><strong><span style="font-size:110%">{'Datos Agrupados' if self.agrupados ==True else 'Datos No Agrupados'}</span></strong></br></pre>
+                    <pre>Total n: <strong><span style="font-size:110%">{self.total_n}</span></strong> {self.repr_fa}</br></pre>
+                </p>
 
-                    <table border="1" align="center" cellspacing="0" cellpadding="5">
-                        <tr valign="bottom" align="center">
-                            <th width="300"><pre><span style="font-size:110%">Variable Aleatoria (Xi)</span></br></pre></pre></th>
-                            <th width="300"><pre><span style="font-size:110%">Elementos (ni)</span></br></pre></pre></th>	
-                        </tr>
-                        <tr>
-                            <td>
-                                <table border="1" align="center" cellspacing="0" cellpadding="5"  width="300"  height="20">
-                                    <tr>
-                                    <td> Representa:</td>
-                                    <td><strong> {self.repr_xi}</strong></td>
-                                    </tr>
-                                    <tr>
-                                    <td> Columna Xi:</td>
-                                    <td><strong> {self.nombre_columna_xi}</strong></td>
-                                    </tr>
-                                </table>
-                            </td>
-                            <td>
-                                <table border="1" align="center" cellspacing="0" cellpadding="5"  width="300"  height="20">
+                <table border="1" align="center" cellspacing="0" cellpadding="5">
+                    <tr valign="bottom" align="center">
+                        <th width="300"><pre><span style="font-size:110%">Variable Aleatoria (Xi1)</span></br></pre></pre></th>
+                        <th width="300"><pre><span style="font-size:110%">Variable Aleatoria (Xi2)</span></br></pre></pre></th>
+                        <th width="300"><pre><span style="font-size:110%">Elementos (Fa/ni)</span></br></pre></pre></th>	
+                    </tr>
+                    <tr>
+                        <td>
+                            <table border="1" align="center" cellspacing="0" cellpadding="5"  width="300"  height="20">
                                 <tr>
-                                    <td>Representa:</td>
-                                    <td><strong> {self.repr_fa}</strong></td>
-                                    </tr>
-                                </table>
-                            </td>	
-                        </tr>
-                        <tr>
-                        </table>
-                </body>
-                {self.datos._repr_html_()}
-                '''
-
-            else:
-                return f'''
-                <body>
-                    <h1>
-                        {self.titulo}
-                    </h1>
-
-                    <p align="left">
-                        <pre><strong><span style="font-size:110%">{'Datos Agrupados' if self.agrupados ==True else 'Datos No Agrupados'}</span></strong></br></pre>
-                        <pre>Total n: <strong><span style="font-size:110%">{self.total_n}</span></strong> {self.repr_fa}</br></pre>
-                    </p>
-
-                    <table border="1" align="center" cellspacing="0" cellpadding="5">
-                        <tr valign="bottom" align="center">
-                            <th width="300"><pre><span style="font-size:110%">Variable Aleatoria (Xi)</span></br></pre></pre></th>
-                            <th width="300"><pre><span style="font-size:110%">Elementos (Fa/ni)</span></br></pre></pre></th>	
-                        </tr>
-                        <tr>
-                            <td>
-                                <table border="1" align="center" cellspacing="0" cellpadding="5"  width="300"  height="20">
-                                    <tr>
-                                    <td> Representa:</td>
-                                    <td><strong> {self.repr_xi}</strong></td>
-                                    </tr>
-                                    <tr>
-                                    <td> Columna Xi:</td>
-                                    <td><strong> {self.nombre_columna_xi}</strong></td>
-                                    </tr>
-                                </table>
-                            </td>
-                            <td>
-                                <table border="1" align="center" cellspacing="0" cellpadding="5"  width="300"  height="20">
+                                <td> Representa:</td>
+                                <td><strong> {self.repr_xi}</strong></td>
+                                </tr>
                                 <tr>
-                                    <td> Representa:</td>
-                                    <td><strong> {self.repr_fa}</strong></td>
-                                    </tr>
-                                    <tr>
-                                    <td> Columna Fa:</td>
-                                    <td><strong> {self.nombre_columna_fa}</strong></td>
-                                    </tr>
-                                </table>
-                            </td>	
-                        </tr>
-                        <tr>
-                        </table>
-                </body>
-                {self.datos._repr_html_()}'''
+                                <td> Columna Xi:</td>
+                                <td><strong> {self.nombre_columna_xi}</strong></td>
+                                </tr>
+                            </table>
+                        </td>
+                        <td>
+                            <table border="1" align="center" cellspacing="0" cellpadding="5"  width="300"  height="20">
+                                <tr>
+                                <td> Representa:</td>
+                                <td><strong> {self.repr_xi2}</strong></td>
+                                </tr>
+                                <tr>
+                                <td> Columna Xi:</td>
+                                <td><strong> {self.nombre_columna_xi2}</strong></td>
+                                </tr>
+                            </table>
+                        </td>                        
+                        <td>
+                            <table border="1" align="center" cellspacing="0" cellpadding="5"  width="300"  height="20">
+                            <tr>
+                                <td> Representa:</td>
+                                <td><strong> {self.repr_fa}</strong></td>
+                                </tr>
+                                <tr>
+                                <td> Columna Fa:</td>
+                                <td><strong> {self.nombre_columna_fa}</strong></td>
+                                </tr>
+                            </table>
+                        </td>	
+                    </tr>
+                    <tr>
+                    </table>
+            </body>
+            {self.datos._repr_html_()}'''
 
 
 class AnalisisEstadistico:
