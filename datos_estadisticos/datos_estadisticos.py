@@ -21,90 +21,55 @@ class DatosEstadisticos:
         self.xi_es_index = xi_es_index
         self.muestra = muestra
 
-    def __total_n__(self):
-            
-            if self.agrupados == False:
-                total_n = len(self.xi)
-            
-            else:
-                print('aqui')
-                total_n = self.fa.sum()
-
-            return total_n
-
-
-class DatosUnivariada(DatosEstadisticos):
-
-    def __init__(self, datos, titulo, repr_xi, repr_fa, agrupados=False, columna_xi=0, columna_fa=0, xi_es_index=False, muestra=True):
-        
-        super().__init__(datos, titulo, repr_xi, repr_fa, agrupados, columna_xi, columna_fa, xi_es_index, muestra)
-        #super().__init__(datos, titulo, muestra, agrupados)
-
-        #self.repr_xi = repr_xi
-        #self.columna_xi = columna_xi
-        #self.repr_fa = repr_fa
-        #self.columna_fa = columna_fa
-        #self.xi_es_index = xi_es_index
-
-
-        self.__dar_formato_datos__()
-
-        self.__quitar_xi_de_index__()
-        
-        self.__obtener_nombre_columnas__()
-
-        self.__obtener_xi_fa__()
-
-        self.__ordenar_datos__()
-
-        self.total_n = self.__total_n__()
-
     def __dar_formato_datos__(self):
-        datos = self.datos
-        repr_xi = self.repr_xi
-        repr_fa = self.repr_fa
         
-        if type(self.datos) == list:
-            self.datos = pandas.DataFrame(datos)
-        
-        elif type(datos) == dict:
-            self.datos = pandas.Series(datos, name=repr_xi)
-            self.datos = pandas.DataFrame(self.datos)
-            self.datos[repr_fa] = self.datos.index
-            self.datos = self.datos.reset_index(drop=True)
-            self.datos.set_index(repr_fa, inplace=True)
-
-        elif type(datos) == pandas.Series:
-            self.datos = datos.to_frame()
-    
-        else:
-            self.datos = datos
-
-    def __quitar_xi_de_index__(self):
-        if (self.xi_es_index == True) or (len(self.datos.columns)  == 1 and self.agrupados == True):
+        if type(self) == DatosUnivariada:
+            datos = self.datos
+            repr_xi = self.repr_xi
+            repr_fa = self.repr_fa
             
-            self.datos.reset_index(inplace= True)
-            self.datos.rename(mapper = {self.datos.columns[0]: self.repr_xi}, axis='columns', inplace=True)
-            self.columna_fa = 1
-            self.xi_es_index = False                
+            if type(self.datos) == list:
+                
+                self.datos = pandas.DataFrame(datos)
+            
+            elif type(datos) == dict:
+                self.datos = pandas.Series(datos, name=repr_xi)
+                self.datos = pandas.DataFrame(self.datos)
+                self.datos[repr_fa] = self.datos.index
+                self.datos = self.datos.reset_index(drop=True)
+                self.datos.set_index(repr_fa, inplace=True)
 
-    def __ordenar_datos__(self):
-
-        if self.xi_es_index == True:
-            self.datos.sort_index(inplace=True)
-
+            elif type(datos) == pandas.Series:
+                
+                self.datos = datos.to_frame()
+        
+            else:
+                
+                self.datos = datos
+        
         else:
-            self.datos.sort_values(self.nombre_columna_xi, inplace=True)
+            datos = self.datos
+            repr_xi = self.repr_xi
+            repr_xi2 = self.repr_xi2
+            repr_fa = self.repr_fa
+            
+
+            if type(datos) == list:
+                
+                self.datos = pandas.DataFrame(datos)
+
+            elif type(datos) == pandas.Series:
+                
+                self.datos = pandas.DataFrame(datos.to_list())
+                
+            
+            elif type(datos) == pandas.DataFrame:
+                
+                self.datos = datos
+            else:
+                raise ValueError('Solo se acepta Dataframe 2 columnas o lista de tuplas')
 
     def __obtener_nombre_columnas__(self):
-        '''
-        Funcion.-   Obtiene el nombre de las columnas xi y fa de un DataFrame para futuras referencias en 
-                    formulas estadisticas   
-        Input:
-            dataframe
-        Output:
-            (nombre columna "xi", nombre columna "fa")
-        '''
 
         type_xi = type(self.columna_xi)
         type_fa = type(self.columna_fa)
@@ -125,6 +90,19 @@ class DatosUnivariada(DatosEstadisticos):
             else:
                 self.nombre_columna_xi = self.datos.iloc[:,self.columna_xi].name
 
+            if type(self) == DatosBivariada:
+                #------- obtenemos nombre de columna "xi2" -------
+                # Si "xi2" es string
+
+                type_xi2 = type(self.columna_xi2)
+                if type_xi2 == str:
+                    self.nombre_columna_xi2 = self.columna_xi2
+
+                # Si "xi2" es un numero
+                else:
+                    self.nombre_columna_xi2 = self.datos.iloc[:,self.columna_xi2].name
+
+
         #------- obtenemos nombre de columna "fa" -------
         # Si "fa" es string
         if type_fa == str:
@@ -137,6 +115,58 @@ class DatosUnivariada(DatosEstadisticos):
     def __obtener_xi_fa__(self):
         self.xi = self.datos.loc[: , self.nombre_columna_xi]
         self.fa = self.datos.loc[: , self.nombre_columna_fa]
+
+        if type(self) == DatosBivariada:
+            self.xi2 = self.datos.loc[: , self.nombre_columna_xi2]
+
+    def __ordenar_datos__(self):
+
+        if self.xi_es_index == True:
+            self.datos.sort_index(inplace=True)
+
+        else:
+            if type(self) == DatosUnivariada:
+                self.datos.sort_values(self.nombre_columna_xi, inplace=True)
+            else:
+                self.datos.sort_values([self.nombre_columna_xi, self.nombre_columna_xi2], inplace=True)
+
+    def __total_n__(self):
+
+            if self.agrupados == False:
+                total_n = len(self.xi)
+            
+            else:
+                total_n = self.fa.sum()
+
+            return total_n
+
+
+class DatosUnivariada(DatosEstadisticos):
+
+    def __init__(self, datos, titulo, repr_xi, repr_fa, agrupados=False, columna_xi=0, columna_fa=0, xi_es_index=False, muestra=True):
+        
+        super().__init__(datos, titulo, repr_xi, repr_fa, agrupados, columna_xi, columna_fa, xi_es_index, muestra)
+
+        self.__dar_formato_datos__()
+
+        self.__quitar_xi_de_index__()
+        
+        self.__obtener_nombre_columnas__()
+
+        self.__obtener_xi_fa__()
+
+        self.__ordenar_datos__()
+
+        self.total_n = self.__total_n__()
+
+
+    def __quitar_xi_de_index__(self):
+        if (self.xi_es_index == True) or (len(self.datos.columns)  == 1 and self.agrupados == True):
+            
+            self.datos.reset_index(inplace= True)
+            self.datos.rename(mapper = {self.datos.columns[0]: self.repr_xi}, axis='columns', inplace=True)
+            self.columna_fa = 1
+            self.xi_es_index = False                
 
     def __creacion_intervalos__(self, rango_intervalos):
         '''
@@ -415,82 +445,10 @@ class DatosBivariada(DatosEstadisticos):
         self.__dar_formato_datos__()
         self.__obtener_nombre_columnas__()
         self.__obtener_xi_fa__()
+        self.__ordenar_datos__()
 
         self.total_n = self.__total_n__()
 
-    def __dar_formato_datos__(self):
-        datos = self.datos
-        repr_xi1 = self.repr_xi1
-        repr_xi2 = self.repr_xi2
-        repr_fa = self.repr_fa
-        
-        if type(self.datos) == list:
-            self.datos = pandas.DataFrame(datos)
-        
-        elif type(datos) == dict:
-            self.datos = pandas.Series(datos, name=repr_xi1)
-            self.datos = pandas.DataFrame(self.datos)
-            self.datos[repr_fa] = self.datos.index
-            self.datos = self.datos.reset_index(drop=True)
-            self.datos.set_index(repr_fa, inplace=True)
-
-        elif type(datos) == pandas.Series:
-            self.datos = datos.to_frame()
-    
-        else:
-            self.datos = datos
-
-    def __obtener_nombre_columnas__(self):
-        '''
-        Funcion.-   Obtiene el nombre de las columnas xi y fa de un DataFrame para futuras referencias en 
-                    formulas estadisticas   
-        Input:
-            dataframe
-        Output:
-            (nombre columna "xi", nombre columna "fa")
-        '''
-
-        type_xi = type(self.columna_xi)
-        type_xi2 = type(self.columna_xi2)
-        type_fa = type(self.columna_fa)
-        
-        #------- obtenemos nombre de columna "xi1" -------
-        # Si "xi" esta en el index
-        if self.xi_es_index == True:
-            self.nombre_columna_xi = self.datos.index.name
-
-        else:
-            # Si "xi" no esta en el index
-            # Si "xi" es string
-            if type_xi == str:
-                self.nombre_columna_xi = self.columna_xi
-            
-            # Si "xi" no esta en el index
-            # Si "xi" es un numero
-            else:
-                self.nombre_columna_xi = self.datos.iloc[:,self.columna_xi].name
-
-        #------- obtenemos nombre de columna "xi2" -------
-        # Si "xi2" es string
-        if type_xi2 == str:
-            self.nombre_columna_xi2 = self.columna_xi2
-
-        # Si "xi2" es un numero
-        else:
-            self.nombre_columna_xi2 = self.datos.iloc[:,self.columna_xi2].name
-
-        #------- obtenemos nombre de columna "fa" -------
-        # Si "fa" es string
-        if type_fa == str:
-            self.nombre_columna_fa = self.columna_fa
-
-        # Si "fa" es un numero
-        else:
-            self.nombre_columna_fa = self.datos.iloc[:,self.columna_fa].name
-
-    def __obtener_xi_fa__(self):
-        self.xi = self.datos.loc[: , self.nombre_columna_xi]
-        self.fa = self.datos.loc[: , self.nombre_columna_fa]
 
     def _repr_html_(self):
 
