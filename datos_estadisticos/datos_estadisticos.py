@@ -21,6 +21,19 @@ class DatosEstadisticos:
         self.xi_es_index = xi_es_index
         self.muestra = muestra
 
+    def __quitar_xi_de_index__(self):
+        if type(self) == DatosUnivariada:
+            if (self.xi_es_index == True) or (len(self.datos.columns)  == 1 and self.agrupados == True):
+                
+                self.datos.reset_index(inplace= True)
+                self.datos.rename(mapper = {self.datos.columns[0]: self.repr_xi}, axis='columns', inplace=True)
+                self.columna_fa = 1
+                self.xi_es_index = False
+        else:
+            if (self.xi_es_index == True) or (len(self.datos.columns)  == 2 and self.agrupados == True):
+
+                raise ValueError('Xi no puede estar en index para DatosBivariada')
+
     def __dar_formato_datos__(self):
         
         if type(self) == DatosUnivariada:
@@ -140,6 +153,44 @@ class DatosEstadisticos:
 
             return total_n
 
+    def __crear_backup__(self):
+        
+        self.datos_backup = self.datos.copy()
+        self.columna_xi_backup = copy.copy(self.columna_xi)
+        self.nombre_columna_xi_backup = copy.copy(self.nombre_columna_xi)
+        self.xi_name_backup = copy.copy(self.xi.name)
+        self.columna_fa_backup = copy.copy(self.columna_fa)
+        self.fa_name_backup = copy.copy(self.fa.name)
+        self.nombre_columna_fa_backup = copy.copy(self.nombre_columna_fa)
+        self.agrupados_backup = copy.copy(self.agrupados)
+        self.xi_backup = copy.copy(self.xi)
+        self.fa_backup = copy.copy(self.fa)
+
+        if type(self) == DatosBivariada:
+            self.columna_xi2_backup = copy.copy(self.columna_xi2)
+            self.nombre_columna_xi2_backup = copy.copy(self.nombre_columna_xi2)
+            self.xi2_name_backup = copy.copy(self.xi2.name)
+            self.xi2_backup = copy.copy(self.xi2)
+
+    def __regresar_backup__(self):
+
+        self.datos = self.datos_backup
+        self.columna_xi = self.columna_xi_backup
+        self.nombre_columna_xi = self.nombre_columna_xi_backup
+        self.xi.name = self.xi_name_backup
+        self.columna_fa = self.columna_fa_backup
+        self.fa.name = self.fa_name_backup
+        self.nombre_columna_fa = self.nombre_columna_fa_backup
+        self.agrupados = self.agrupados_backup
+        self.xi = self.xi_backup
+        self.fa = self.fa_backup
+
+        if type(self) == DatosBivariada:
+            self.columna_xi2 = self.columna_xi2_backup
+            self.nombre_columna_xi2 = self.nombre_columna_xi2_backup
+            self.xi2_name = self.xi2_name_backup
+            self.xi2 = self.xi2_backup
+
 
 class DatosUnivariada(DatosEstadisticos):
 
@@ -158,15 +209,7 @@ class DatosUnivariada(DatosEstadisticos):
         self.__ordenar_datos__()
 
         self.total_n = self.__total_n__()
-
-
-    def __quitar_xi_de_index__(self):
-        if (self.xi_es_index == True) or (len(self.datos.columns)  == 1 and self.agrupados == True):
-            
-            self.datos.reset_index(inplace= True)
-            self.datos.rename(mapper = {self.datos.columns[0]: self.repr_xi}, axis='columns', inplace=True)
-            self.columna_fa = 1
-            self.xi_es_index = False                
+                
 
     def __creacion_intervalos__(self, rango_intervalos):
         '''
@@ -205,14 +248,6 @@ class DatosUnivariada(DatosEstadisticos):
                 [intervalos[-1][1], round(((intervalos[-1][1]) + rango_intervalos), len_rango_intervalo)])
 
         return intervalos
-
-    def __obtener_step_para_np_arange__(self, rango_intervalo):
-        len_int = len(str(int(rango_intervalo)))
-        len_rango_intervalo = (len(str(rango_intervalo)) - 1) - len_int
-        
-        step = float('0.' + '0' * (len_rango_intervalo -1) + '1')
-        
-        return step
 
     def __calculo_frecuencias_absolutas__(self, rango_intervalos):
         contar_datos = self.xi.value_counts().reset_index()
@@ -263,32 +298,6 @@ class DatosUnivariada(DatosEstadisticos):
 
         return tabla_intervalos_frecuencias
 
-    def __crear_backup_convertir_intervalos__(self):
-        
-        self.datos_backup = self.datos.copy()
-        self.columna_xi_backup = copy.copy(self.columna_xi)
-        self.nombre_columna_xi_backup = copy.copy(self.nombre_columna_xi)
-        self.xi_name_backup = copy.copy(self.xi.name)
-        self.columna_fa_backup = copy.copy(self.columna_fa)
-        self.fa_name_backup = copy.copy(self.fa.name)
-        self.nombre_columna_fa_backup = copy.copy(self.nombre_columna_fa)
-        self.agrupados_backup = copy.copy(self.agrupados)
-        self.xi_backup = copy.copy(self.xi)
-        self.fa_backup = copy.copy(self.fa)
-
-    def __regresar_backup_convertir_intervalos__(self):
-
-        self.datos = self.datos_backup
-        self.columna_xi = self.columna_xi_backup
-        self.nombre_columna_xi = self.nombre_columna_xi_backup
-        self.xi.name = self.xi_name_backup
-        self.columna_fa = self.columna_fa_backup
-        self.fa.name = self.fa_name_backup
-        self.nombre_columna_fa = self.nombre_columna_fa_backup
-        self.agrupados = self.agrupados_backup
-        self.xi = self.xi_backup
-        self.fa = self.fa_backup
-
     def agrupar(self, rango_intervalos):
         ''''
         Agrupa los datos calculando sus frecuencias absolutas de acuerdo a un rango de intervalo determinado.
@@ -300,14 +309,14 @@ class DatosUnivariada(DatosEstadisticos):
 
         '''
         try:
-            self.__regresar_backup_convertir_intervalos__()
+            self.__regresar_backup__()
             
         except:
             pass
 
         datos_intervalos = self.__calculo_frecuencias_absolutas__(rango_intervalos)
         
-        self.__crear_backup_convertir_intervalos__()
+        self.__crear_backup__()
 
         self.datos = datos_intervalos
 
@@ -443,12 +452,63 @@ class DatosBivariada(DatosEstadisticos):
         self.columna_fa = columna_fa
         
         self.__dar_formato_datos__()
+        self.__quitar_xi_de_index__()
         self.__obtener_nombre_columnas__()
         self.__obtener_xi_fa__()
         self.__ordenar_datos__()
 
         self.total_n = self.__total_n__()
 
+    def tabla_pivote (self, index=None, totales=False, relativa=False):
+        
+        if index == None:
+            index = self.nombre_columna_xi
+            columnas = self.nombre_columna_xi2
+        
+        elif index == self.nombre_columna_xi:
+            columnas = self.nombre_columna_xi2
+        
+        elif index == self.nombre_columna_xi2:
+            columnas = self.nombre_columna_xi
+        
+        else:
+            raise ValueError('Nombre de index solo puede ser el nombre de la columna xi o el de xi2')
+
+        try:
+            self.__regresar_backup__()
+        
+        except:
+            pass
+        
+        if relativa == False and totales == False:
+            tabla_pivote = self.datos.pivot_table(index= index, columns= columnas, aggfunc= len)
+        
+        elif relativa == False and totales == True:
+            tabla_pivote = self.datos.pivot_table(index= index, columns= columnas, aggfunc= len, margins=True, margins_name='Total')
+
+        elif relativa == True and totales == False:
+            
+            tabla_pivote = self.datos.pivot_table(index= index, columns= columnas, aggfunc= lambda x: len(x)/len(self.datos))
+        
+        else: # relativa == True and totales == True:
+
+            tabla_pivote = self.datos.pivot_table(index= index, columns= columnas, aggfunc= lambda x: len(x)/len(self.datos), margins=True, margins_name='Total')
+
+
+        self.__crear_backup__()
+
+        self.datos = tabla_pivote
+
+        return self
+
+
+    def datos_originales(self):
+        try:
+            self.__regresar_backup__()
+        except:
+            raise TypeError('No hay backup de datos')
+        
+        return self
 
     def _repr_html_(self):
 
@@ -491,7 +551,7 @@ class DatosBivariada(DatosEstadisticos):
                                 <td><strong> {self.repr_xi2}</strong></td>
                                 </tr>
                                 <tr>
-                                <td> Columna Xi:</td>
+                                <td> Columna Xi2:</td>
                                 <td><strong> {self.nombre_columna_xi2}</strong></td>
                                 </tr>
                             </table>
@@ -571,6 +631,8 @@ class DatosBivariada(DatosEstadisticos):
                     </table>
             </body>
             {self.datos._repr_html_()}'''
+
+
 
 
 class AnalisisEstadistico:
