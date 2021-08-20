@@ -63,7 +63,7 @@ class DatosEstadisticos:
         else:
             datos = self.datos
             repr_xi = self.repr_xi
-            repr_xi2 = self.repr_xi2
+            repr_yi = self.repr_yi
             repr_fa = self.repr_fa
             
 
@@ -104,16 +104,16 @@ class DatosEstadisticos:
                 self.nombre_columna_xi = self.datos.iloc[:,self.columna_xi].name
 
             if type(self) == DatosBivariada:
-                #------- obtenemos nombre de columna "xi2" -------
-                # Si "xi2" es string
+                #------- obtenemos nombre de columna "yi" -------
+                # Si "yi" es string
 
-                type_xi2 = type(self.columna_xi2)
-                if type_xi2 == str:
-                    self.nombre_columna_xi2 = self.columna_xi2
+                type_yi = type(self.columna_yi)
+                if type_yi == str:
+                    self.nombre_columna_yi = self.columna_yi
 
-                # Si "xi2" es un numero
+                # Si "yi" es un numero
                 else:
-                    self.nombre_columna_xi2 = self.datos.iloc[:,self.columna_xi2].name
+                    self.nombre_columna_yi = self.datos.iloc[:,self.columna_yi].name
 
 
         #------- obtenemos nombre de columna "fa" -------
@@ -130,7 +130,7 @@ class DatosEstadisticos:
         self.fa = self.datos.loc[: , self.nombre_columna_fa]
 
         if type(self) == DatosBivariada:
-            self.xi2 = self.datos.loc[: , self.nombre_columna_xi2]
+            self.yi = self.datos.loc[: , self.nombre_columna_yi]
 
     def __ordenar_datos__(self):
 
@@ -141,7 +141,7 @@ class DatosEstadisticos:
             if type(self) == DatosUnivariada:
                 self.datos.sort_values(self.nombre_columna_xi, inplace=True)
             else:
-                self.datos.sort_values([self.nombre_columna_xi, self.nombre_columna_xi2], inplace=True)
+                self.datos.sort_values([self.nombre_columna_xi, self.nombre_columna_yi], inplace=True)
 
     def __total_n__(self):
 
@@ -167,10 +167,10 @@ class DatosEstadisticos:
         self.fa_backup = copy.copy(self.fa)
 
         if type(self) == DatosBivariada:
-            self.columna_xi2_backup = copy.copy(self.columna_xi2)
-            self.nombre_columna_xi2_backup = copy.copy(self.nombre_columna_xi2)
-            self.xi2_name_backup = copy.copy(self.xi2.name)
-            self.xi2_backup = copy.copy(self.xi2)
+            self.columna_yi_backup = copy.copy(self.columna_yi)
+            self.nombre_columna_yi_backup = copy.copy(self.nombre_columna_yi)
+            self.yi_name_backup = copy.copy(self.yi.name)
+            self.yi_backup = copy.copy(self.yi)
 
     def __regresar_backup__(self):
 
@@ -186,10 +186,10 @@ class DatosEstadisticos:
         self.fa = self.fa_backup
 
         if type(self) == DatosBivariada:
-            self.columna_xi2 = self.columna_xi2_backup
-            self.nombre_columna_xi2 = self.nombre_columna_xi2_backup
-            self.xi2_name = self.xi2_name_backup
-            self.xi2 = self.xi2_backup
+            self.columna_yi = self.columna_yi_backup
+            self.nombre_columna_yi = self.nombre_columna_yi_backup
+            self.yi_name = self.yi_name_backup
+            self.yi = self.yi_backup
 
 
 class DatosUnivariada(DatosEstadisticos):
@@ -441,14 +441,14 @@ class DatosUnivariada(DatosEstadisticos):
 
 
 class DatosBivariada(DatosEstadisticos):
-    def __init__(self, datos, titulo, repr_xi, repr_xi2, repr_fa, columna_xi, columna_xi2, columna_fa=0, muestra=True, agrupados=False, xi_es_index=False):
+    def __init__(self, datos, titulo, repr_xi, repr_yi, repr_fa, columna_xi, columna_yi, columna_fa=0, muestra=True, agrupados=False, xi_es_index=False):
         super().__init__(datos, titulo, repr_xi, repr_fa, agrupados, columna_xi, columna_fa, xi_es_index, muestra)
         
-        self.repr_xi1 = repr_xi
-        self.repr_xi2 = repr_xi2
+        self.repr_xi = repr_xi
+        self.repr_yi = repr_yi
         self.repr_fa = repr_fa
-        self.columna_xi1 = columna_xi
-        self.columna_xi2 = columna_xi2
+        self.columna_xi = columna_xi
+        self.columna_yi = columna_yi
         self.columna_fa = columna_fa
         
         self.__dar_formato_datos__()
@@ -463,16 +463,16 @@ class DatosBivariada(DatosEstadisticos):
         
         if index == None:
             index = self.nombre_columna_xi
-            columnas = self.nombre_columna_xi2
+            columnas = self.nombre_columna_yi
         
         elif index == self.nombre_columna_xi:
-            columnas = self.nombre_columna_xi2
+            columnas = self.nombre_columna_yi
         
-        elif index == self.nombre_columna_xi2:
+        elif index == self.nombre_columna_yi:
             columnas = self.nombre_columna_xi
         
         else:
-            raise ValueError('Nombre de index solo puede ser el nombre de la columna xi o el de xi2')
+            raise ValueError('Nombre de index solo puede ser el nombre de la columna xi o el de yi')
 
         return (index, columnas)
 
@@ -538,8 +538,8 @@ class DatosBivariada(DatosEstadisticos):
 
                 <table border="1" align="center" cellspacing="0" cellpadding="5">
                     <tr valign="bottom" align="center">
-                        <th width="300"><pre><span style="font-size:110%">Variable Aleatoria (Xi1)</span></br></pre></pre></th>
-                        <th width="300"><pre><span style="font-size:110%">Variable Aleatoria (Xi2)</span></br></pre></pre></th>
+                        <th width="300"><pre><span style="font-size:110%">Variable Aleatoria (Xi)</span></br></pre></pre></th>
+                        <th width="300"><pre><span style="font-size:110%">Variable Aleatoria (yi)</span></br></pre></pre></th>
                         <th width="300"><pre><span style="font-size:110%">Elementos (ni)</span></br></pre></pre></th>	
                     </tr>
                     <tr>
@@ -559,11 +559,11 @@ class DatosBivariada(DatosEstadisticos):
                             <table border="1" align="center" cellspacing="0" cellpadding="5"  width="300"  height="20">
                                 <tr>
                                 <td> Representa:</td>
-                                <td><strong> {self.repr_xi2}</strong></td>
+                                <td><strong> {self.repr_yi}</strong></td>
                                 </tr>
                                 <tr>
-                                <td> Columna Xi2:</td>
-                                <td><strong> {self.nombre_columna_xi2}</strong></td>
+                                <td> Columna yi:</td>
+                                <td><strong> {self.nombre_columna_yi}</strong></td>
                                 </tr>
                             </table>
                         </td>                            
@@ -596,8 +596,8 @@ class DatosBivariada(DatosEstadisticos):
 
                 <table border="1" align="center" cellspacing="0" cellpadding="5">
                     <tr valign="bottom" align="center">
-                        <th width="300"><pre><span style="font-size:110%">Variable Aleatoria (Xi1)</span></br></pre></pre></th>
-                        <th width="300"><pre><span style="font-size:110%">Variable Aleatoria (Xi2)</span></br></pre></pre></th>
+                        <th width="300"><pre><span style="font-size:110%">Variable Aleatoria (Xi)</span></br></pre></pre></th>
+                        <th width="300"><pre><span style="font-size:110%">Variable Aleatoria (yi)</span></br></pre></pre></th>
                         <th width="300"><pre><span style="font-size:110%">Elementos (Fa/ni)</span></br></pre></pre></th>	
                     </tr>
                     <tr>
@@ -617,11 +617,11 @@ class DatosBivariada(DatosEstadisticos):
                             <table border="1" align="center" cellspacing="0" cellpadding="5"  width="300"  height="20">
                                 <tr>
                                 <td> Representa:</td>
-                                <td><strong> {self.repr_xi2}</strong></td>
+                                <td><strong> {self.repr_yi}</strong></td>
                                 </tr>
                                 <tr>
                                 <td> Columna Xi:</td>
-                                <td><strong> {self.nombre_columna_xi2}</strong></td>
+                                <td><strong> {self.nombre_columna_yi}</strong></td>
                                 </tr>
                             </table>
                         </td>                        
@@ -694,9 +694,9 @@ class AnalisisEstadistico:
                         'faa': 'FAA', 
                         'fr': 'FR', 
                         'fra': 'FRA', 
-                        'xi2': 'Xi2', 
+                        'yi': 'yi', 
                         'xi*ni': 'Xi*Ni', 
-                        'ni*xi2': 'Ni*Xi2', 
+                        'ni*yi': 'Ni*yi', 
                         'xi-media': 'Xi-Media', 
                         'ni*(xi-media)2': 'Ni*(Xi-Media)2', 
                         'ni*(xi-media)3': 'Ni*(Xi-Media)3', 
@@ -734,9 +734,9 @@ class AnalisisEstadistico:
                     self.__nombres_columnas_estadisticas__['fr'],
                     self.__nombres_columnas_estadisticas__['fra'],
                     self.__nombres_columnas_estadisticas__['mc'],
-                    self.__nombres_columnas_estadisticas__['xi2'],
+                    self.__nombres_columnas_estadisticas__['yi'],
                     self.__nombres_columnas_estadisticas__['xi*ni'],
-                    self.__nombres_columnas_estadisticas__['ni*xi2'],
+                    self.__nombres_columnas_estadisticas__['ni*yi'],
                     self.__nombres_columnas_estadisticas__['xi-media'],
                     self.__nombres_columnas_estadisticas__['ni*(xi-media)2'],
                     self.__nombres_columnas_estadisticas__['ni*(xi-media)3'],
@@ -751,9 +751,9 @@ class AnalisisEstadistico:
                     self.__nombres_columnas_estadisticas__['faa'],
                     self.__nombres_columnas_estadisticas__['fr'],
                     self.__nombres_columnas_estadisticas__['fra'],
-                    self.__nombres_columnas_estadisticas__['xi2'],
+                    self.__nombres_columnas_estadisticas__['yi'],
                     self.__nombres_columnas_estadisticas__['xi*ni'],
-                    self.__nombres_columnas_estadisticas__['ni*xi2'],
+                    self.__nombres_columnas_estadisticas__['ni*yi'],
                     self.__nombres_columnas_estadisticas__['xi-media'],
                     self.__nombres_columnas_estadisticas__['ni*(xi-media)2'],
                     self.__nombres_columnas_estadisticas__['ni*(xi-media)3'],
@@ -764,7 +764,7 @@ class AnalisisEstadistico:
         else:
             self.tabla_estadistica = self.tabla_estadistica[[
                     self.__nombre_columna_xi__,                    
-                    self.__nombres_columnas_estadisticas__['xi2'],
+                    self.__nombres_columnas_estadisticas__['yi'],
                     self.__nombres_columnas_estadisticas__['xi-media'],
                 ]]
                 
@@ -979,7 +979,7 @@ class AnalisisEstadistico:
         total_n =    self.__total_n__
         media =      self.media
         xi =         self.tabla_estadistica[self.__nombre_columna_xi__] if es_rango == False else self.tabla_estadistica[self.__nombres_columnas_estadisticas__['mc']]
-        xi2 =        self.tabla_estadistica[self.__nombres_columnas_estadisticas__['xi2']] = xi ** 2
+        yi =        self.tabla_estadistica[self.__nombres_columnas_estadisticas__['yi']] = xi ** 2
         xi_menos_media =        self.tabla_estadistica[self.__nombres_columnas_estadisticas__['xi-media']] = xi - media
 
         # Cuando son datos agrupados no existen frecuencias absolutas
@@ -988,7 +988,7 @@ class AnalisisEstadistico:
             fr =      None
             fra =     None
             nixi =   None   
-            nixi2 =  None
+            niyi =  None
             xi_menos_media_por_ni_exp_2 = None
             xi_menos_media_por_ni_exp_3 = None
             xi_menos_media_por_ni_exp_4 = None
@@ -999,7 +999,7 @@ class AnalisisEstadistico:
             fr =                    self.tabla_estadistica[self.__nombres_columnas_estadisticas__['fr']] = fa / total_n
             fra =                   self.tabla_estadistica[self.__nombres_columnas_estadisticas__['fra']] = fr.cumsum()
             nixi =                  self.tabla_estadistica[self.__nombres_columnas_estadisticas__['xi*ni']] = xi * fa
-            nixi2 =                 self.tabla_estadistica[self.__nombres_columnas_estadisticas__['ni*xi2']] = xi2 * fa
+            niyi =                 self.tabla_estadistica[self.__nombres_columnas_estadisticas__['ni*yi']] = yi * fa
             
 
             # Dataframe de xi-media y ni para formula .apply
@@ -1013,9 +1013,9 @@ class AnalisisEstadistico:
         self.__faa__ = faa
         self.__fr__ = fr
         self.__fra__ = fra
-        self.__xi2__ = xi2
+        self.__yi__ = yi
         self.__nixi__ = nixi
-        self.__nixi2__ = nixi2
+        self.__niyi__ = niyi
         self.__xi_menos_media__ = xi_menos_media
         self.__xi_menos_media2_por_ni__ = xi_menos_media_por_ni_exp_2
         self.__xi_menos_media3_por_ni__ = xi_menos_media_por_ni_exp_3
@@ -1197,12 +1197,12 @@ class AnalisisEstadistico:
         muestra = self.__muestra__
         
         xi = self.__xi__
-        nixi2 = self.__nixi2__
+        niyi = self.__niyi__
         n = self.__total_n__
         media = self.media
 
         if self.__agrupados__ == True:
-            varianza = ((sum(nixi2) / n) - (media ** 2))
+            varianza = ((sum(niyi) / n) - (media ** 2))
             
 
         else:
@@ -1783,11 +1783,11 @@ class Analisis:
 
             if type(self) ==  AnalisisBivariada:
 
-                self.__repr_xi1__ = datos.repr_xi1
-                self.__repr_xi2__ = datos.repr_xi2
+                self.__repr_xi__ = datos.repr_xi
+                self.__repr_yi__ = datos.repr_yi
                 self.__repr_fa__ = datos.repr_fa
-                self.__columna_xi1__ = datos.columna_xi1
-                self.__columna_xi2__ = datos.columna_xi2
+                self.__columna_xi__ = datos.columna_xi
+                self.__columna_yi__ = datos.columna_yi
                 self.__columna_fa__ = datos.columna_fa            
 
 
@@ -1815,9 +1815,9 @@ class AnalisisUnivariada(Analisis):
                         'faa': 'FAA', 
                         'fr': 'FR', 
                         'fra': 'FRA', 
-                        'xi2': 'Xi2', 
+                        'yi': 'yi', 
                         'xi*ni': 'Xi*Ni', 
-                        'ni*xi2': 'Ni*Xi2', 
+                        'ni*yi': 'Ni*yi', 
                         'xi-media': 'Xi-Media', 
                         'ni*(xi-media)2': 'Ni*(Xi-Media)2', 
                         'ni*(xi-media)3': 'Ni*(Xi-Media)3', 
@@ -1855,9 +1855,9 @@ class AnalisisUnivariada(Analisis):
                     self.__nombres_columnas_estadisticas__['fr'],
                     self.__nombres_columnas_estadisticas__['fra'],
                     self.__nombres_columnas_estadisticas__['mc'],
-                    self.__nombres_columnas_estadisticas__['xi2'],
+                    self.__nombres_columnas_estadisticas__['yi'],
                     self.__nombres_columnas_estadisticas__['xi*ni'],
-                    self.__nombres_columnas_estadisticas__['ni*xi2'],
+                    self.__nombres_columnas_estadisticas__['ni*yi'],
                     self.__nombres_columnas_estadisticas__['xi-media'],
                     self.__nombres_columnas_estadisticas__['ni*(xi-media)2'],
                     self.__nombres_columnas_estadisticas__['ni*(xi-media)3'],
@@ -1872,9 +1872,9 @@ class AnalisisUnivariada(Analisis):
                     self.__nombres_columnas_estadisticas__['faa'],
                     self.__nombres_columnas_estadisticas__['fr'],
                     self.__nombres_columnas_estadisticas__['fra'],
-                    self.__nombres_columnas_estadisticas__['xi2'],
+                    self.__nombres_columnas_estadisticas__['yi'],
                     self.__nombres_columnas_estadisticas__['xi*ni'],
-                    self.__nombres_columnas_estadisticas__['ni*xi2'],
+                    self.__nombres_columnas_estadisticas__['ni*yi'],
                     self.__nombres_columnas_estadisticas__['xi-media'],
                     self.__nombres_columnas_estadisticas__['ni*(xi-media)2'],
                     self.__nombres_columnas_estadisticas__['ni*(xi-media)3'],
@@ -1885,7 +1885,7 @@ class AnalisisUnivariada(Analisis):
         else:
             self.tabla_estadistica = self.tabla_estadistica[[
                     self.__nombre_columna_xi__,                    
-                    self.__nombres_columnas_estadisticas__['xi2'],
+                    self.__nombres_columnas_estadisticas__['yi'],
                     self.__nombres_columnas_estadisticas__['xi-media'],
                 ]]
                 
@@ -2100,7 +2100,7 @@ class AnalisisUnivariada(Analisis):
         total_n =    self.__total_n__
         media =      self.media
         xi =         self.tabla_estadistica[self.__nombre_columna_xi__] if es_rango == False else self.tabla_estadistica[self.__nombres_columnas_estadisticas__['mc']]
-        xi2 =        self.tabla_estadistica[self.__nombres_columnas_estadisticas__['xi2']] = xi ** 2
+        yi =        self.tabla_estadistica[self.__nombres_columnas_estadisticas__['yi']] = xi ** 2
         xi_menos_media =        self.tabla_estadistica[self.__nombres_columnas_estadisticas__['xi-media']] = xi - media
 
         # Cuando son datos agrupados no existen frecuencias absolutas
@@ -2109,7 +2109,7 @@ class AnalisisUnivariada(Analisis):
             fr =      None
             fra =     None
             nixi =   None   
-            nixi2 =  None
+            niyi =  None
             xi_menos_media_por_ni_exp_2 = None
             xi_menos_media_por_ni_exp_3 = None
             xi_menos_media_por_ni_exp_4 = None
@@ -2120,7 +2120,7 @@ class AnalisisUnivariada(Analisis):
             fr =                    self.tabla_estadistica[self.__nombres_columnas_estadisticas__['fr']] = fa / total_n
             fra =                   self.tabla_estadistica[self.__nombres_columnas_estadisticas__['fra']] = fr.cumsum()
             nixi =                  self.tabla_estadistica[self.__nombres_columnas_estadisticas__['xi*ni']] = xi * fa
-            nixi2 =                 self.tabla_estadistica[self.__nombres_columnas_estadisticas__['ni*xi2']] = xi2 * fa
+            niyi =                 self.tabla_estadistica[self.__nombres_columnas_estadisticas__['ni*yi']] = yi * fa
             
 
             # Dataframe de xi-media y ni para formula .apply
@@ -2134,9 +2134,9 @@ class AnalisisUnivariada(Analisis):
         self.__faa__ = faa
         self.__fr__ = fr
         self.__fra__ = fra
-        self.__xi2__ = xi2
+        self.__yi__ = yi
         self.__nixi__ = nixi
-        self.__nixi2__ = nixi2
+        self.__niyi__ = niyi
         self.__xi_menos_media__ = xi_menos_media
         self.__xi_menos_media2_por_ni__ = xi_menos_media_por_ni_exp_2
         self.__xi_menos_media3_por_ni__ = xi_menos_media_por_ni_exp_3
@@ -2318,12 +2318,12 @@ class AnalisisUnivariada(Analisis):
         muestra = self.__muestra__
         
         xi = self.__xi__
-        nixi2 = self.__nixi2__
+        niyi = self.__niyi__
         n = self.__total_n__
         media = self.media
 
         if self.__agrupados__ == True:
-            varianza = ((sum(nixi2) / n) - (media ** 2))
+            varianza = ((sum(niyi) / n) - (media ** 2))
             
 
         else:
