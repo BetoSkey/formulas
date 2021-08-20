@@ -155,41 +155,41 @@ class DatosEstadisticos:
 
     def __crear_backup__(self):
         
-        self.datos_backup = self.datos.copy()
-        self.columna_xi_backup = copy.copy(self.columna_xi)
-        self.nombre_columna_xi_backup = copy.copy(self.nombre_columna_xi)
-        self.xi_name_backup = copy.copy(self.xi.name)
-        self.columna_fa_backup = copy.copy(self.columna_fa)
-        self.fa_name_backup = copy.copy(self.fa.name)
-        self.nombre_columna_fa_backup = copy.copy(self.nombre_columna_fa)
-        self.agrupados_backup = copy.copy(self.agrupados)
-        self.xi_backup = copy.copy(self.xi)
-        self.fa_backup = copy.copy(self.fa)
+        self.__datos_backup__ = self.datos.copy()
+        self.__columna_xi_backup__ = copy.copy(self.columna_xi)
+        self.__nombre_columna_xi_backup__ = copy.copy(self.nombre_columna_xi)
+        self.__xi_name_backup__ = copy.copy(self.xi.name)
+        self.__columna_fa_backup__ = copy.copy(self.columna_fa)
+        self.__fa_name_backup__ = copy.copy(self.fa.name)
+        self.__nombre_columna_fa_backup__ = copy.copy(self.nombre_columna_fa)
+        self.__agrupados_backup__ = copy.copy(self.agrupados)
+        self.__xi_backup__ = copy.copy(self.xi)
+        self.__fa_backup__ = copy.copy(self.fa)
 
         if type(self) == DatosBivariada:
-            self.columna_yi_backup = copy.copy(self.columna_yi)
-            self.nombre_columna_yi_backup = copy.copy(self.nombre_columna_yi)
-            self.yi_name_backup = copy.copy(self.yi.name)
-            self.yi_backup = copy.copy(self.yi)
+            self.__columna_yi_backup__ = copy.copy(self.columna_yi)
+            self.__nombre_columna_yi_backup__ = copy.copy(self.nombre_columna_yi)
+            self.__yi_name_backup__ = copy.copy(self.yi.name)
+            self.__yi_backup__ = copy.copy(self.yi)
 
     def __regresar_backup__(self):
 
-        self.datos = self.datos_backup
-        self.columna_xi = self.columna_xi_backup
-        self.nombre_columna_xi = self.nombre_columna_xi_backup
-        self.xi.name = self.xi_name_backup
-        self.columna_fa = self.columna_fa_backup
-        self.fa.name = self.fa_name_backup
-        self.nombre_columna_fa = self.nombre_columna_fa_backup
-        self.agrupados = self.agrupados_backup
-        self.xi = self.xi_backup
-        self.fa = self.fa_backup
+        self.datos = self.__datos_backup__
+        self.columna_xi = self.__columna_xi_backup__
+        self.nombre_columna_xi = self.__nombre_columna_xi_backup__
+        self.xi.name = self.__xi_name_backup__
+        self.columna_fa = self.__columna_fa_backup__
+        self.fa.name = self.__fa_name_backup__
+        self.nombre_columna_fa = self.__nombre_columna_fa_backup__
+        self.agrupados = self.__agrupados_backup__
+        self.xi = self.__xi_backup__
+        self.fa = self.__fa_backup__
 
         if type(self) == DatosBivariada:
-            self.columna_yi = self.columna_yi_backup
-            self.nombre_columna_yi = self.nombre_columna_yi_backup
-            self.yi_name = self.yi_name_backup
-            self.yi = self.yi_backup
+            self.columna_yi = self.__columna_yi_backup__
+            self.nombre_columna_yi = self.__nombre_columna_yi_backup__
+            self.yi_name = self.__yi_name_backup__
+            self.yi = self.__yi_backup__
 
 
 class DatosUnivariada(DatosEstadisticos):
