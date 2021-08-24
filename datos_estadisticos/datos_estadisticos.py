@@ -9,28 +9,143 @@ from statistics import variance, mode, multimode, quantiles, pvariance
 from formulas_especiales import ceiling_to_a_number, floor_to_a_number
 import unittest
 
-class DatosEstadisticos:
+class Backup:
+    def __crear_backup__(self):
+        
+        self.__datos_backup__ = copy.copy(self.datos)
+        self.__columna_xi_backup__ = copy.copy(self.__columna_xi__)
+        self.__nombre_columna_xi_backup__ = copy.copy(self.__nombre_columna_xi__)
+        self.__xi_name_backup__ = copy.copy(self.__xi__.name)
+        self.__columna_fa_backup__ = copy.copy(self.__columna_fa__)
+        self.__fa_name_backup__ = copy.copy(self.__fa__.name)
+        self.__nombre_columna_fa_backup__ = copy.copy(self.__nombre_columna_fa__)
+        self.__agrupados_backup__ = copy.copy(self.__agrupados__)
+        self.__xi_backup__ = copy.copy(self.__xi__)
+        self.__fa_backup__ = copy.copy(self.__fa__)
+
+        if type(self) == DatosBivariada or type(self) == AnalisisBivariada:
+            self.__columna_yi_backup__ = copy.copy(self.__columna_yi__)
+            self.__nombre_columna_yi_backup__ = copy.copy(self.__nombre_columna_yi__)
+            self.__yi_name_backup__ = copy.copy(self.__yi__.name)
+            self.__yi_backup__ = copy.copy(self.__yi__)
+
+    def __regresar_backup__(self):
+
+        self.datos = self.__datos_backup__
+        self.__columna_xi__ = self.__columna_xi_backup__
+        self.__nombre_columna_xi__ = self.__nombre_columna_xi_backup__
+        self.__xi__.name = self.__xi_name_backup__
+        self.__columna_fa__ = self.__columna_fa_backup__
+        self.__fa__.name = self.__fa_name_backup__
+        self.__nombre_columna_fa__ = self.__nombre_columna_fa_backup__
+        self.__agrupados__ = self.__agrupados_backup__
+        self.__xi__ = self.__xi_backup__
+        self.__fa__ = self.__fa_backup__
+            
+        if type(self) == DatosBivariada or type(self) == AnalisisBivariada:
+            
+            self.__columna_yi__ = self.__columna_yi_backup__
+            self.__nombre_columna_yi__ = self.__nombre_columna_yi_backup__
+            self.__yi__.name = self.__yi_name_backup__
+            self.__yi__ = self.__yi_backup__
+
+    def datos_originales(self):
+        try:
+            self.__regresar_backup__()
+        except:
+            raise TypeError('No hay backup de datos')
+        
+        return self
+
+class TablaPivote:
+
+    def __establecer_index_y_columnas_para_tabla_pivote(self, index):
+        
+        if index == None:
+            index = [self.__nombre_columna_xi__, self.__nombre_columna_yi__]
+            columnas = None
+        
+        elif index == self.__nombre_columna_xi__:
+            columnas = self.__nombre_columna_yi__
+        
+        elif index == self.__nombre_columna_yi__:
+            columnas = self.__nombre_columna_xi__
+        
+        else:
+            raise ValueError('Nombre de index SOLAMENTE puede ser el nombre de la columna xi o el de yi')
+
+        return (index, columnas)
+
+    def __crear_tabla_pivote__(self, index, relativa, totales):
+
+        index, columnas = self.__establecer_index_y_columnas_para_tabla_pivote(index=index)
+        
+        if columnas == None and relativa== False and totales == False:
+            tabla_pivote = self.datos.pivot_table(index=index, columns=columnas, aggfunc=len).reset_index().rename({0:'ni'}, axis=1)
+
+        elif columnas == None and relativa == False and totales == True:
+            tabla_pivote = self.datos.pivot_table(index=index, columns=columnas, aggfunc=len, margins=True, margins_name='Total').reset_index().rename({0:'ni'}, axis=1)
+
+        elif columnas == None and relativa == True and totales == False:
+            tabla_pivote = self.datos.pivot_table(index=index, columns=columnas, aggfunc= lambda x: len(x)/len(self.datos)).reset_index().rename({0:'ni'}, axis=1)
+        
+        elif columnas == None and relativa == True and totales == True:
+            tabla_pivote = self.datos.pivot_table(index=index, columns=columnas, aggfunc= lambda x: len(x)/len(self.datos), margins=True, margins_name='Total').reset_index().rename({0:'ni'}, axis=1)
+
+        elif relativa == False and totales == False:
+            tabla_pivote = self.datos.pivot_table(index= index, columns= columnas, aggfunc= len)
+        
+        elif relativa == False and totales == True:
+            tabla_pivote = self.datos.pivot_table(index= index, columns= columnas, aggfunc= len, margins=True, margins_name='Total')
+
+        elif relativa == True and totales == False:
+            
+            tabla_pivote = self.datos.pivot_table(index= index, columns= columnas, aggfunc= lambda x: len(x)/len(self.datos))
+        
+        else: # relativa == True and totales == True:
+
+            tabla_pivote = self.datos.pivot_table(index= index, columns= columnas, aggfunc= lambda x: len(x)/len(self.datos), margins=True, margins_name='Total')        
+
+        return tabla_pivote
+
+    def tabla_pivote(self, index, totales=False, relativa=False):
+        
+        try:
+            self.__regresar_backup__()
+        
+        except:
+            self.__crear_backup__()
+
+        tabla_pivote = self.datos.__crear_tabla_pivote__(index= index, relativa= relativa, totales= totales)
+
+        self.__agrupados__ = True
+
+        self.datos = tabla_pivote
+        
+        return self
+
+class DatosEstadisticos(Backup):
     def __init__(self, datos, titulo, repr_xi, repr_fa, agrupados, columna_xi, columna_fa, xi_es_index, muestra):
         self.datos = datos
-        self.titulo = titulo
-        self.repr_xi = repr_xi
-        self.repr_fa = repr_fa
-        self.agrupados = agrupados
-        self.columna_xi = columna_xi
-        self.columna_fa = columna_fa
-        self.xi_es_index = xi_es_index
-        self.muestra = muestra
+        self.__titulo__ = titulo
+        self.__repr_xi__ = repr_xi
+        self.__repr_fa__ = repr_fa
+        self.__agrupados__ = agrupados
+        self.__columna_xi__ = columna_xi
+        self.__columna_fa__ = columna_fa
+        self.__xi_es_index__ = xi_es_index
+        self.__muestra__ = muestra
 
     def __quitar_xi_de_index__(self):
         if type(self) == DatosUnivariada:
-            if (self.xi_es_index == True) or (len(self.datos.columns)  == 1 and self.agrupados == True):
+            if (self.__xi_es_index__ == True) or (len(self.datos.columns)  == 1 and self.__agrupados__ == True):
                 
                 self.datos.reset_index(inplace= True)
-                self.datos.rename(mapper = {self.datos.columns[0]: self.repr_xi}, axis='columns', inplace=True)
-                self.columna_fa = 1
-                self.xi_es_index = False
+                self.datos.rename(mapper = {self.datos.columns[0]: self.__repr_xi__}, axis='columns', inplace=True)
+                self.__columna_fa__ = 1
+                self.__xi_es_index__ = False
         else:
-            if (self.xi_es_index == True) or (len(self.datos.columns)  == 2 and self.agrupados == True):
+            if (self.__xi_es_index__ == True) or (len(self.datos.columns)  == 2 and self.__agrupados__ == True):
 
                 raise ValueError('Xi no puede estar en index para DatosBivariada')
 
@@ -38,8 +153,8 @@ class DatosEstadisticos:
         
         if type(self) == DatosUnivariada:
             datos = self.datos
-            repr_xi = self.repr_xi
-            repr_fa = self.repr_fa
+            repr_xi = self.__repr_xi__
+            repr_fa = self.__repr_fa__
             
             if type(self.datos) == list:
                 
@@ -62,9 +177,9 @@ class DatosEstadisticos:
         
         else:
             datos = self.datos
-            repr_xi = self.repr_xi
-            repr_yi = self.repr_yi
-            repr_fa = self.repr_fa
+            repr_xi = self.__repr_xi__
+            repr_yi = self.__repr_yi__
+            repr_fa = self.__repr_fa__
             
 
             if type(datos) == list:
@@ -84,112 +199,75 @@ class DatosEstadisticos:
 
     def __obtener_nombre_columnas__(self):
 
-        type_xi = type(self.columna_xi)
-        type_fa = type(self.columna_fa)
+        type_xi = type(self.__columna_xi__)
+        type_fa = type(self.__columna_fa__)
         
         #------- obtenemos nombre de columna "xi" -------
         # Si "xi" esta en el index
-        if self.xi_es_index == True:
-            self.nombre_columna_xi = self.datos.index.name
+        if self.__xi_es_index__ == True:
+            self.__nombre_columna_xi__ = self.datos.index.name
 
         else:
             # Si "xi" no esta en el index
             # Si "xi" es string
             if type_xi == str:
-                self.nombre_columna_xi = self.columna_xi
+                self.__nombre_columna_xi__ = self.__columna_xi__
             
             # Si "xi" no esta en el index
             # Si "xi" es un numero
             else:
-                self.nombre_columna_xi = self.datos.iloc[:,self.columna_xi].name
+                self.__nombre_columna_xi__ = self.datos.iloc[:,self.__columna_xi__].name
 
             if type(self) == DatosBivariada:
                 #------- obtenemos nombre de columna "yi" -------
                 # Si "yi" es string
 
-                type_yi = type(self.columna_yi)
+                type_yi = type(self.__columna_yi__)
                 if type_yi == str:
-                    self.nombre_columna_yi = self.columna_yi
+                    self.__nombre_columna_yi__ = self.__columna_yi__
 
                 # Si "yi" es un numero
                 else:
-                    self.nombre_columna_yi = self.datos.iloc[:,self.columna_yi].name
+                    self.__nombre_columna_yi__ = self.datos.iloc[:,self.__columna_yi__].name
 
 
         #------- obtenemos nombre de columna "fa" -------
         # Si "fa" es string
         if type_fa == str:
-            self.nombre_columna_fa = self.columna_fa
+            self.__nombre_columna_fa__ = self.__columna_fa__
 
         # Si "fa" es un numero
         else:
-            self.nombre_columna_fa = self.datos.iloc[:,self.columna_fa].name
+            self.__nombre_columna_fa__ = self.datos.iloc[:,self.__columna_fa__].name
 
     def __obtener_xi_fa__(self):
-        self.xi = self.datos.loc[: , self.nombre_columna_xi]
-        self.fa = self.datos.loc[: , self.nombre_columna_fa]
+        self.__xi__ = self.datos.loc[: , self.__nombre_columna_xi__]
+        self.__fa__ = self.datos.loc[: , self.__nombre_columna_fa__]
 
         if type(self) == DatosBivariada:
-            self.yi = self.datos.loc[: , self.nombre_columna_yi]
+            self.__yi__ = self.datos.loc[: , self.__nombre_columna_yi__]
 
     def __ordenar_datos__(self):
 
-        if self.xi_es_index == True:
+        if self.__xi_es_index__ == True:
             self.datos.sort_index(inplace=True)
 
         else:
             if type(self) == DatosUnivariada:
-                self.datos.sort_values(self.nombre_columna_xi, inplace=True)
+                self.datos.sort_values(self.__nombre_columna_xi__, inplace=True)
             else:
-                self.datos.sort_values([self.nombre_columna_xi, self.nombre_columna_yi], inplace=True)
+                self.datos.sort_values([self.__nombre_columna_xi__, self.__nombre_columna_yi__], inplace=True)
 
     def __total_n__(self):
 
-            if self.agrupados == False:
-                total_n = len(self.xi)
+            if self.__agrupados__ == False:
+                total_n = len(self.__xi__)
             
             else:
-                total_n = self.fa.sum()
+                total_n = self.__fa__.sum()
 
             return total_n
 
-    def __crear_backup__(self):
-        
-        self.__datos_backup__ = self.datos.copy()
-        self.__columna_xi_backup__ = copy.copy(self.columna_xi)
-        self.__nombre_columna_xi_backup__ = copy.copy(self.nombre_columna_xi)
-        self.__xi_name_backup__ = copy.copy(self.xi.name)
-        self.__columna_fa_backup__ = copy.copy(self.columna_fa)
-        self.__fa_name_backup__ = copy.copy(self.fa.name)
-        self.__nombre_columna_fa_backup__ = copy.copy(self.nombre_columna_fa)
-        self.__agrupados_backup__ = copy.copy(self.agrupados)
-        self.__xi_backup__ = copy.copy(self.xi)
-        self.__fa_backup__ = copy.copy(self.fa)
-
-        if type(self) == DatosBivariada:
-            self.__columna_yi_backup__ = copy.copy(self.columna_yi)
-            self.__nombre_columna_yi_backup__ = copy.copy(self.nombre_columna_yi)
-            self.__yi_name_backup__ = copy.copy(self.yi.name)
-            self.__yi_backup__ = copy.copy(self.yi)
-
-    def __regresar_backup__(self):
-
-        self.datos = self.__datos_backup__
-        self.columna_xi = self.__columna_xi_backup__
-        self.nombre_columna_xi = self.__nombre_columna_xi_backup__
-        self.xi.name = self.__xi_name_backup__
-        self.columna_fa = self.__columna_fa_backup__
-        self.fa.name = self.__fa_name_backup__
-        self.nombre_columna_fa = self.__nombre_columna_fa_backup__
-        self.agrupados = self.__agrupados_backup__
-        self.xi = self.__xi_backup__
-        self.fa = self.__fa_backup__
-
-        if type(self) == DatosBivariada:
-            self.columna_yi = self.__columna_yi_backup__
-            self.nombre_columna_yi = self.__nombre_columna_yi_backup__
-            self.yi_name = self.__yi_name_backup__
-            self.yi = self.__yi_backup__
 
 
 class DatosUnivariada(DatosEstadisticos):
@@ -208,9 +286,8 @@ class DatosUnivariada(DatosEstadisticos):
 
         self.__ordenar_datos__()
 
-        self.total_n = self.__total_n__()
+        self.__total_n__ = self.__total_n__()
                 
-
     def __creacion_intervalos__(self, rango_intervalos):
         '''
         Crea intervalos de los datos proporcionados de acuerdo al rango requerido para los
@@ -228,8 +305,8 @@ class DatosUnivariada(DatosEstadisticos):
             len_rango_intervalo = rango_intervalos
 
 
-        maximo_numero_en_rangos = round(ceiling_to_a_number(max(self.xi), rango_intervalos), len_rango_intervalo)
-        minimo_numero_en_rangos = round(floor_to_a_number(min(self.xi), rango_intervalos), len_rango_intervalo)
+        maximo_numero_en_rangos = round(ceiling_to_a_number(max(self.__xi__), rango_intervalos), len_rango_intervalo)
+        minimo_numero_en_rangos = round(floor_to_a_number(min(self.__xi__), rango_intervalos), len_rango_intervalo)
 
 
         distancia_minimo_numero_vs_maximo_numero_en_rangos = round((maximo_numero_en_rangos - \
@@ -250,9 +327,9 @@ class DatosUnivariada(DatosEstadisticos):
         return intervalos
 
     def __calculo_frecuencias_absolutas__(self, rango_intervalos):
-        contar_datos = self.xi.value_counts().reset_index()
-        contar_datos.columns = [self.repr_xi, self.repr_fa]
-        contar_datos.sort_values(self.repr_xi, inplace=True)
+        contar_datos = self.__xi__.value_counts().reset_index()
+        contar_datos.columns = [self.__repr_xi__, self.__repr_fa__]
+        contar_datos.sort_values(self.__repr_xi__, inplace=True)
 
         if rango_intervalos == 0:
             
@@ -291,14 +368,14 @@ class DatosUnivariada(DatosEstadisticos):
                 #frecuencias.append((intervalo, total_fa))
                 frecuencias.append((total_fa))
 
-                #frecuencias_series = pandas.Series(frecuencias, name=self.nombre_columna_xi)
-                frecuencias_series = pandas.Series(frecuencias, name=self.repr_fa)
+                #frecuencias_series = pandas.Series(frecuencias, name=self.__nombre_columna_xi__)
+                frecuencias_series = pandas.Series(frecuencias, name=self.__repr_fa__)
 
                 tabla_intervalos_frecuencias = pandas.concat([intervalos, frecuencias_series], axis=1)
 
         return tabla_intervalos_frecuencias
 
-    def agrupar(self, rango_intervalos):
+    def agrupar(self, rango_intervalos=0):
         ''''
         Agrupa los datos calculando sus frecuencias absolutas de acuerdo a un rango de intervalo determinado.
 
@@ -312,48 +389,46 @@ class DatosUnivariada(DatosEstadisticos):
             self.__regresar_backup__()
             
         except:
-            pass
+            self.__crear_backup__()
 
         datos_intervalos = self.__calculo_frecuencias_absolutas__(rango_intervalos)
         
-        self.__crear_backup__()
-
         self.datos = datos_intervalos
 
         if rango_intervalos == 0:
-            self.columna_xi = self.repr_xi
-            self.nombre_columna_xi = self.repr_xi
-            self.xi.name = self.repr_xi
-            self.xi = datos_intervalos[self.repr_xi]
+            self.__columna_xi__ = self.__repr_xi__
+            self.__nombre_columna_xi__ = self.__repr_xi__
+            self.__xi__.name = self.__repr_xi__
+            self.__xi__ = datos_intervalos[self.__repr_xi__]
 
         else:
-            self.columna_xi = 'intervalos'
-            self.nombre_columna_xi = 'intervalos'
-            self.xi.name = 'intervalos'            
-            self.xi = datos_intervalos['intervalos']
+            self.__columna_xi__ = 'intervalos'
+            self.__nombre_columna_xi__ = 'intervalos'
+            self.__xi__.name = 'intervalos'            
+            self.__xi__ = datos_intervalos['intervalos']
 
         self.datos = datos_intervalos
-        self.columna_fa = self.repr_fa
-        self.fa.name = self.repr_fa
-        self.nombre_columna_fa = self.repr_fa
-        self.agrupados = True
-        self.fa = datos_intervalos[self.repr_fa]
+        self.__columna_fa__ = self.__repr_fa__
+        self.__fa__.name = self.__repr_fa__
+        self.__nombre_columna_fa__ = self.__repr_fa__
+        self.__agrupados__ = True
+        self.__fa__ = datos_intervalos[self.__repr_fa__]
 
         return self
 
     def _repr_html_(self):
         
-        if self.agrupados == False:
+        if self.__agrupados__ == False:
             return f'''
             <body>
                 <h1>
-                    {self.titulo}
+                    {self.__titulo__}
                 </h1>
 
                 <p align="left">
-                    <pre><strong><span style="font-size:110%">{'Datos Agrupados' if self.agrupados ==True else 'Datos No Agrupados'}</span></strong></br></pre>
-                    <pre><strong><span style="font-size:110%">{'Muestra' if self.muestra ==True else 'Poblacion'}</span></strong></br></pre>
-                    <pre>Total n: <strong><span style="font-size:110%">{self.total_n}</span></strong> {self.repr_fa}</br></pre>
+                    <pre><strong><span style="font-size:110%">{'Datos Agrupados' if self.__agrupados__ ==True else 'Datos No Agrupados'}</span></strong></br></pre>
+                    <pre><strong><span style="font-size:110%">{'Muestra' if self.__muestra__ ==True else 'Poblacion'}</span></strong></br></pre>
+                    <pre>Total n: <strong><span style="font-size:110%">{self.__total_n__}</span></strong> {self.__repr_fa__}</br></pre>
                 </p>
 
                 <table border="1" align="center" cellspacing="0" cellpadding="5">
@@ -366,11 +441,11 @@ class DatosUnivariada(DatosEstadisticos):
                             <table border="1" align="center" cellspacing="0" cellpadding="5"  width="300"  height="20">
                                 <tr>
                                 <td> Representa:</td>
-                                <td><strong> {self.repr_xi}</strong></td>
+                                <td><strong> {self.__repr_xi__}</strong></td>
                                 </tr>
                                 <tr>
                                 <td> Columna Xi:</td>
-                                <td><strong> {self.nombre_columna_xi}</strong></td>
+                                <td><strong> {self.__nombre_columna_xi__}</strong></td>
                                 </tr>
                             </table>
                         </td>
@@ -378,7 +453,7 @@ class DatosUnivariada(DatosEstadisticos):
                             <table border="1" align="center" cellspacing="0" cellpadding="5"  width="300"  height="20">
                                <tr>
                                 <td>Representa:</td>
-                                <td><strong> {self.repr_fa}</strong></td>
+                                <td><strong> {self.__repr_fa__}</strong></td>
                                 </tr>
                             </table>
                         </td>	
@@ -393,12 +468,12 @@ class DatosUnivariada(DatosEstadisticos):
             return f'''
             <body>
                 <h1>
-                    {self.titulo}
+                    {self.__titulo__}
                 </h1>
 
                 <p align="left">
-                    <pre><strong><span style="font-size:110%">{'Datos Agrupados' if self.agrupados ==True else 'Datos No Agrupados'}</span></strong></br></pre>
-                    <pre>Total n: <strong><span style="font-size:110%">{self.total_n}</span></strong> {self.repr_fa}</br></pre>
+                    <pre><strong><span style="font-size:110%">{'Datos Agrupados' if self.__agrupados__ ==True else 'Datos No Agrupados'}</span></strong></br></pre>
+                    <pre>Total n: <strong><span style="font-size:110%">{self.__total_n__}</span></strong> {self.__repr_fa__}</br></pre>
                 </p>
 
                 <table border="1" align="center" cellspacing="0" cellpadding="5">
@@ -411,11 +486,11 @@ class DatosUnivariada(DatosEstadisticos):
                             <table border="1" align="center" cellspacing="0" cellpadding="5"  width="300"  height="20">
                                 <tr>
                                 <td> Representa:</td>
-                                <td><strong> {self.repr_xi}</strong></td>
+                                <td><strong> {self.__repr_xi__}</strong></td>
                                 </tr>
                                 <tr>
                                 <td> Columna Xi:</td>
-                                <td><strong> {self.nombre_columna_xi}</strong></td>
+                                <td><strong> {self.__nombre_columna_xi__}</strong></td>
                                 </tr>
                             </table>
                         </td>
@@ -423,11 +498,11 @@ class DatosUnivariada(DatosEstadisticos):
                             <table border="1" align="center" cellspacing="0" cellpadding="5"  width="300"  height="20">
                                <tr>
                                 <td> Representa:</td>
-                                <td><strong> {self.repr_fa}</strong></td>
+                                <td><strong> {self.__repr_fa__}</strong></td>
                                 </tr>
                                 <tr>
                                 <td> Columna Fa:</td>
-                                <td><strong> {self.nombre_columna_fa}</strong></td>
+                                <td><strong> {self.__nombre_columna_fa__}</strong></td>
                                 </tr>
                             </table>
                         </td>	
@@ -438,18 +513,16 @@ class DatosUnivariada(DatosEstadisticos):
             {self.datos._repr_html_()}'''
 
 
-
-
-class DatosBivariada(DatosEstadisticos):
+class DatosBivariada(DatosEstadisticos, TablaPivote):
     def __init__(self, datos, titulo, repr_xi, repr_yi, repr_fa, columna_xi, columna_yi, columna_fa=0, muestra=True, agrupados=False, xi_es_index=False):
         super().__init__(datos, titulo, repr_xi, repr_fa, agrupados, columna_xi, columna_fa, xi_es_index, muestra)
         
-        self.repr_xi = repr_xi
-        self.repr_yi = repr_yi
-        self.repr_fa = repr_fa
-        self.columna_xi = columna_xi
-        self.columna_yi = columna_yi
-        self.columna_fa = columna_fa
+        self.__repr_xi__ = repr_xi
+        self.__repr_yi__ = repr_yi
+        self.__repr_fa__ = repr_fa
+        self.__columna_xi__ = columna_xi
+        self.__columna_yi__ = columna_yi
+        self.__columna_fa__ = columna_fa
         
         self.__dar_formato_datos__()
         self.__quitar_xi_de_index__()
@@ -457,83 +530,40 @@ class DatosBivariada(DatosEstadisticos):
         self.__obtener_xi_fa__()
         self.__ordenar_datos__()
 
-        self.total_n = self.__total_n__()
+        self.__total_n__ = self.__total_n__()
 
-    def __establecer_index_y_columnas_para_tabla_pivote(self, index):
-        
-        if index == None:
-            index = self.nombre_columna_xi
-            columnas = self.nombre_columna_yi
-        
-        elif index == self.nombre_columna_xi:
-            columnas = self.nombre_columna_yi
-        
-        elif index == self.nombre_columna_yi:
-            columnas = self.nombre_columna_xi
-        
-        else:
-            raise ValueError('Nombre de index solo puede ser el nombre de la columna xi o el de yi')
+    def agrupar(self):
+        index = None
+        totales = False
+        relativa = False
 
-        return (index, columnas)
-
-    def __crear_tabla_pivote__(self, index, relativa, totales):
-
-        index, columnas = self.__establecer_index_y_columnas_para_tabla_pivote(index=index)
-
-        if relativa == False and totales == False:
-            tabla_pivote = self.datos.pivot_table(index= index, columns= columnas, aggfunc= len)
-        
-        elif relativa == False and totales == True:
-            tabla_pivote = self.datos.pivot_table(index= index, columns= columnas, aggfunc= len, margins=True, margins_name='Total')
-
-        elif relativa == True and totales == False:
-            
-            tabla_pivote = self.datos.pivot_table(index= index, columns= columnas, aggfunc= lambda x: len(x)/len(self.datos))
-        
-        else: # relativa == True and totales == True:
-
-            tabla_pivote = self.datos.pivot_table(index= index, columns= columnas, aggfunc= lambda x: len(x)/len(self.datos), margins=True, margins_name='Total')        
-
-        return tabla_pivote
-
-    def tabla_pivote (self, index=None, totales=False, relativa=False):
-        
         try:
             self.__regresar_backup__()
         
         except:
-            pass
-        
+            self.__crear_backup__()
 
         tabla_pivote = self.__crear_tabla_pivote__(index= index, relativa= relativa, totales= totales)
 
-        self.__crear_backup__()
+        self.__agrupados__ = True
 
         self.datos = tabla_pivote
 
         return self
 
-    def datos_originales(self):
-        try:
-            self.__regresar_backup__()
-        except:
-            raise TypeError('No hay backup de datos')
-        
-        return self
-
     def _repr_html_(self):
 
-        if self.agrupados == False:
+        if self.__agrupados__ == False:
             return f'''
             <body>
                 <h1>
-                    {self.titulo}
+                    {self.__titulo__}
                 </h1>
 
                 <p align="left">
-                    <pre><strong><span style="font-size:110%">{'Datos Agrupados' if self.agrupados ==True else 'Datos No Agrupados'}</span></strong></br></pre>
-                    <pre><strong><span style="font-size:110%">{'Muestra' if self.muestra ==True else 'Poblacion'}</span></strong></br></pre>
-                    <pre>Total n: <strong><span style="font-size:110%">{self.total_n}</span></strong> {self.repr_fa}</br></pre>
+                    <pre><strong><span style="font-size:110%">{'Datos Agrupados' if self.__agrupados__ ==True else 'Datos No Agrupados'}</span></strong></br></pre>
+                    <pre><strong><span style="font-size:110%">{'Muestra' if self.__muestra__ ==True else 'Poblacion'}</span></strong></br></pre>
+                    <pre>Total n: <strong><span style="font-size:110%">{self.__total_n__}</span></strong> {self.__repr_fa__}</br></pre>
                 </p>
 
                 <table border="1" align="center" cellspacing="0" cellpadding="5">
@@ -547,11 +577,11 @@ class DatosBivariada(DatosEstadisticos):
                             <table border="1" align="center" cellspacing="0" cellpadding="5"  width="300"  height="20">
                                 <tr>
                                 <td> Representa:</td>
-                                <td><strong> {self.repr_xi}</strong></td>
+                                <td><strong> {self.__repr_xi__}</strong></td>
                                 </tr>
                                 <tr>
                                 <td> Columna Xi:</td>
-                                <td><strong> {self.nombre_columna_xi}</strong></td>
+                                <td><strong> {self.__nombre_columna_xi__}</strong></td>
                                 </tr>
                             </table>
                         </td>
@@ -559,11 +589,11 @@ class DatosBivariada(DatosEstadisticos):
                             <table border="1" align="center" cellspacing="0" cellpadding="5"  width="300"  height="20">
                                 <tr>
                                 <td> Representa:</td>
-                                <td><strong> {self.repr_yi}</strong></td>
+                                <td><strong> {self.__repr_yi__}</strong></td>
                                 </tr>
                                 <tr>
                                 <td> Columna yi:</td>
-                                <td><strong> {self.nombre_columna_yi}</strong></td>
+                                <td><strong> {self.__nombre_columna_yi__}</strong></td>
                                 </tr>
                             </table>
                         </td>                            
@@ -571,7 +601,7 @@ class DatosBivariada(DatosEstadisticos):
                             <table border="1" align="center" cellspacing="0" cellpadding="5"  width="300"  height="20">
                             <tr>
                                 <td>Representa:</td>
-                                <td><strong> {self.repr_fa}</strong></td>
+                                <td><strong> {self.__repr_fa__}</strong></td>
                                 </tr>
                             </table>
                         </td>	
@@ -586,12 +616,12 @@ class DatosBivariada(DatosEstadisticos):
             return f'''
             <body>
                 <h1>
-                    {self.titulo}
+                    {self.__titulo__}
                 </h1>
 
                 <p align="left">
-                    <pre><strong><span style="font-size:110%">{'Datos Agrupados' if self.agrupados ==True else 'Datos No Agrupados'}</span></strong></br></pre>
-                    <pre>Total n: <strong><span style="font-size:110%">{self.total_n}</span></strong> {self.repr_fa}</br></pre>
+                    <pre><strong><span style="font-size:110%">{'Datos Agrupados' if self.__agrupados__ ==True else 'Datos No Agrupados'}</span></strong></br></pre>
+                    <pre>Total n: <strong><span style="font-size:110%">{self.__total_n__}</span></strong> {self.__repr_fa__}</br></pre>
                 </p>
 
                 <table border="1" align="center" cellspacing="0" cellpadding="5">
@@ -605,11 +635,11 @@ class DatosBivariada(DatosEstadisticos):
                             <table border="1" align="center" cellspacing="0" cellpadding="5"  width="300"  height="20">
                                 <tr>
                                 <td> Representa:</td>
-                                <td><strong> {self.repr_xi}</strong></td>
+                                <td><strong> {self.__repr_xi__}</strong></td>
                                 </tr>
                                 <tr>
                                 <td> Columna Xi:</td>
-                                <td><strong> {self.nombre_columna_xi}</strong></td>
+                                <td><strong> {self.__nombre_columna_xi__}</strong></td>
                                 </tr>
                             </table>
                         </td>
@@ -617,11 +647,11 @@ class DatosBivariada(DatosEstadisticos):
                             <table border="1" align="center" cellspacing="0" cellpadding="5"  width="300"  height="20">
                                 <tr>
                                 <td> Representa:</td>
-                                <td><strong> {self.repr_yi}</strong></td>
+                                <td><strong> {self.__repr_yi__}</strong></td>
                                 </tr>
                                 <tr>
                                 <td> Columna Xi:</td>
-                                <td><strong> {self.nombre_columna_yi}</strong></td>
+                                <td><strong> {self.__nombre_columna_yi__}</strong></td>
                                 </tr>
                             </table>
                         </td>                        
@@ -629,11 +659,11 @@ class DatosBivariada(DatosEstadisticos):
                             <table border="1" align="center" cellspacing="0" cellpadding="5"  width="300"  height="20">
                             <tr>
                                 <td> Representa:</td>
-                                <td><strong> {self.repr_fa}</strong></td>
+                                <td><strong> {self.__repr_fa__}</strong></td>
                                 </tr>
                                 <tr>
                                 <td> Columna Fa:</td>
-                                <td><strong> {self.nombre_columna_fa}</strong></td>
+                                <td><strong> {self.__nombre_columna_fa__}</strong></td>
                                 </tr>
                             </table>
                         </td>	
@@ -674,19 +704,19 @@ class AnalisisEstadistico:
 
     def __copiar_parametros__(self,datos):
             self.__datos__ = datos.datos
-            self.__titulo__ = datos.titulo
-            self.__agrupados__ = datos.agrupados
-            self.__repr_xi__ = datos.repr_xi
-            self.__columna_xi__ = datos.columna_xi
-            self.__repr_fa__ = datos.repr_fa
-            self.__columna_fa__ = datos.columna_fa
-            self.__xi_es_index__ = datos.xi_es_index
-            self.__muestra__ = datos.muestra
-            self.__nombre_columna_xi__ = datos.nombre_columna_xi
-            self.__nombre_columna_fa__ = datos.nombre_columna_fa
-            self.__xi__ = datos.xi
-            self.__fa__ = datos.fa
-            self.__total_n__ = datos.total_n
+            self.__titulo__ = datos.__titulo__
+            self.__agrupados__ = datos.__agrupados__
+            self.__repr_xi__ = datos.__repr_xi__
+            self.__columna_xi__ = datos.__columna_xi__
+            self.__repr_fa__ = datos.__repr_fa__
+            self.__columna_fa__ = datos.__columna_fa__
+            self.__xi_es_index__ = datos.__xi_es_index__
+            self.__muestra__ = datos.__muestra__
+            self.__nombre_columna_xi__ = datos.__nombre_columna_xi__
+            self.__nombre_columna_fa__ = datos.__nombre_columna_fa__
+            self.__xi__ = datos.__xi__
+            self.__fa__ = datos.__fa__
+            self.__total_n__ = datos.__total_n__
 
     def __establecer_nombres_columnas_estadisticas__(self):
         self.__nombres_columnas_estadisticas__ = {
@@ -1756,39 +1786,67 @@ class AnalisisEstadistico:
             {self.tabla_estadistica._repr_html_()}'''
 
 
-class Analisis:
+class Analisis(Backup):
 
     def __init__(self, datos):
         
         self.datos = datos
-        
+
+    def __copiar_backup__(self,datos):
+
+        self.__datos_backup__ = datos.__datos_backup__
+        self.__columna_xi_backup__ = datos.__columna_xi_backup__
+        self.__nombre_columna_xi_backup__ = datos.__nombre_columna_xi_backup__
+        self.__xi_name_backup__ = datos.__xi_name_backup__
+        self.__columna_fa_backup__ = datos.__columna_fa_backup__
+        self.__fa_name_backup__ = datos.__fa_name_backup__
+        self.__nombre_columna_fa_backup__ = datos.__nombre_columna_fa_backup__
+        self.__agrupados_backup__ = datos.__agrupados_backup__
+        self.__xi_backup__ = datos.__xi_backup__
+        self.__fa_backup__ = datos.__fa_backup__
+
+        if type(self) == DatosBivariada:
+            self.__columna_yi_backup__ = datos.__columna_yi_backup__
+            self.__nombre_columna_yi_backup__ = datos.__nombre_columna_yi_backup__
+            self.__yi_name_backup__ = datos.__yi_name_backup__
+            self.__yi_backup__ = datos.__yi_backup__        
 
     def __copiar_parametros__(self,datos):
+            
+            try:
+                self.__copiar_backup__()
+            
+            except:
+                pass
+
             self.__datos__ = datos.datos
-            self.__titulo__ = datos.titulo
-            self.__agrupados__ = datos.agrupados
-            self.__xi_es_index__ = datos.xi_es_index
-            self.__muestra__ = datos.muestra
-            self.__nombre_columna_xi__ = datos.nombre_columna_xi
-            self.__nombre_columna_fa__ = datos.nombre_columna_fa
-            self.__xi__ = datos.xi
-            self.__fa__ = datos.fa
-            self.__total_n__ = datos.total_n
+            self.__titulo__ = datos.__titulo__
+            self.__agrupados__ = datos.__agrupados__
+            self.__xi_es_index__ = datos.__xi_es_index__
+            self.__muestra__ = datos.__muestra__
+            self.__nombre_columna_xi__ = datos.__nombre_columna_xi__
+            self.__nombre_columna_fa__ = datos.__nombre_columna_fa__
+            self.__xi__ = datos.__xi__
+            self.__fa__ = datos.__fa__
+            self.__total_n__ = datos.__total_n__
             
             if type(self) == AnalisisUnivariada:
-                self.__repr_xi__ = datos.repr_xi                
-                self.__repr_fa__ = datos.repr_fa
-                self.__columna_xi__ = datos.columna_xi                
-                self.__columna_fa__ = datos.columna_fa                
+                self.__repr_xi__ = datos.__repr_xi__                
+                self.__repr_fa__ = datos.__repr_fa__
+                self.__columna_xi__ = datos.__columna_xi__                
+                self.__columna_fa__ = datos.__columna_fa__                
 
             if type(self) ==  AnalisisBivariada:
 
-                self.__repr_xi__ = datos.repr_xi
-                self.__repr_yi__ = datos.repr_yi
-                self.__repr_fa__ = datos.repr_fa
-                self.__columna_xi__ = datos.columna_xi
-                self.__columna_yi__ = datos.columna_yi
-                self.__columna_fa__ = datos.columna_fa            
+                self.__repr_xi__ = datos.__repr_xi__
+                self.__repr_yi__ = datos.__repr_yi__
+                self.__repr_fa__ = datos.__repr_fa__
+                self.__columna_xi__ = datos.__columna_xi__
+                self.__columna_yi__ = datos.__columna_yi__
+                self.__nombre_columna_yi__ = datos.__nombre_columna_yi__
+                self.__columna_fa__ = datos.__columna_fa__            
+
+
 
 
 class AnalisisUnivariada(Analisis):
@@ -2876,12 +2934,137 @@ class AnalisisUnivariada(Analisis):
             </body>
             {self.tabla_estadistica._repr_html_()}'''
 
-class AnalisisBivariada(Analisis):
+class AnalisisBivariada(Analisis, TablaPivote):
+
     def __init__(self, datos):
         
         super().__init__(datos)
 
         self.__copiar_parametros__(datos)
+
+    def _repr_html_(self):
+
+        if self.__agrupados__ == False:
+            return f'''
+            <body>
+                <h1>
+                    {self.__titulo__}
+                </h1>
+
+                <p align="left">
+                    <pre><strong><span style="font-size:110%">{'Datos Agrupados' if self.__agrupados__ ==True else 'Datos No Agrupados'}</span></strong></br></pre>
+                    <pre><strong><span style="font-size:110%">{'Muestra' if self.__muestra__ ==True else 'Poblacion'}</span></strong></br></pre>
+                    <pre>Total n: <strong><span style="font-size:110%">{self.__total_n__}</span></strong> {self.__repr_fa__}</br></pre>
+                </p>
+
+                <table border="1" align="center" cellspacing="0" cellpadding="5">
+                    <tr valign="bottom" align="center">
+                        <th width="300"><pre><span style="font-size:110%">Variable Aleatoria (Xi)</span></br></pre></pre></th>
+                        <th width="300"><pre><span style="font-size:110%">Variable Aleatoria (yi)</span></br></pre></pre></th>
+                        <th width="300"><pre><span style="font-size:110%">Elementos (ni)</span></br></pre></pre></th>	
+                    </tr>
+                    <tr>
+                        <td>
+                            <table border="1" align="center" cellspacing="0" cellpadding="5"  width="300"  height="20">
+                                <tr>
+                                <td> Representa:</td>
+                                <td><strong> {self.__repr_xi__}</strong></td>
+                                </tr>
+                                <tr>
+                                <td> Columna Xi:</td>
+                                <td><strong> {self.__nombre_columna_xi__}</strong></td>
+                                </tr>
+                            </table>
+                        </td>
+                        <td>
+                            <table border="1" align="center" cellspacing="0" cellpadding="5"  width="300"  height="20">
+                                <tr>
+                                <td> Representa:</td>
+                                <td><strong> {self.__repr_yi__}</strong></td>
+                                </tr>
+                                <tr>
+                                <td> Columna yi:</td>
+                                <td><strong> {self.__nombre_columna_yi__}</strong></td>
+                                </tr>
+                            </table>
+                        </td>                            
+                        <td>
+                            <table border="1" align="center" cellspacing="0" cellpadding="5"  width="300"  height="20">
+                            <tr>
+                                <td>Representa:</td>
+                                <td><strong> {self.__repr_fa__}</strong></td>
+                                </tr>
+                            </table>
+                        </td>	
+                    </tr>
+                    <tr>
+                    </table>
+            </body>
+            
+            {self.datos._repr_html_()}
+            '''
+
+        else:
+            return f'''
+            <body>
+                <h1>
+                   {self.__titulo__}
+                </h1>
+
+                <p align="left">
+                    <pre><strong><span style="font-size:110%">{'Datos Agrupados' if self.__agrupados__ ==True else 'Datos No Agrupados'}</span></strong></br></pre>
+                    <pre>Total n: <strong><span style="font-size:110%">{self.__total_n__}</span></strong> {self.__repr_fa__}</br></pre>
+                </p>
+
+                <table border="1" align="center" cellspacing="0" cellpadding="5">
+                    <tr valign="bottom" align="center">
+                        <th width="300"><pre><span style="font-size:110%">Variable Aleatoria (Xi)</span></br></pre></pre></th>
+                        <th width="300"><pre><span style="font-size:110%">Variable Aleatoria (yi)</span></br></pre></pre></th>
+                        <th width="300"><pre><span style="font-size:110%">Elementos (Fa/ni)</span></br></pre></pre></th>	
+                    </tr>
+                    <tr>
+                        <td>
+                            <table border="1" align="center" cellspacing="0" cellpadding="5"  width="300"  height="20">
+                                <tr>
+                                <td> Representa:</td>
+                                <td><strong> {self.__repr_xi__}</strong></td>
+                                </tr>
+                                <tr>
+                                <td> Columna Xi:</td>
+                                <td><strong> {self.__nombre_columna_xi__}</strong></td>
+                                </tr>
+                            </table>
+                        </td>
+                        <td>
+                            <table border="1" align="center" cellspacing="0" cellpadding="5"  width="300"  height="20">
+                                <tr>
+                                <td> Representa:</td>
+                                <td><strong> {self.__repr_yi__}</strong></td>
+                                </tr>
+                                <tr>
+                                <td> Columna Xi:</td>
+                                <td><strong> {self.__nombre_columna_yi__}</strong></td>
+                                </tr>
+                            </table>
+                        </td>                        
+                        <td>
+                            <table border="1" align="center" cellspacing="0" cellpadding="5"  width="300"  height="20">
+                            <tr>
+                                <td> Representa:</td>
+                                <td><strong> {self.__repr_fa__}</strong></td>
+                                </tr>
+                                <tr>
+                                <td> Columna Fa:</td>
+                                <td><strong> {self.__nombre_columna_fa__}</strong></td>
+                                </tr>
+                            </table>
+                        </td>	
+                    </tr>
+                    <tr>
+                    </table>
+            </body>
+            {self.datos._repr_html_()}'''    
+
 
 
 class PruebasCajaCristal(unittest.TestCase):
