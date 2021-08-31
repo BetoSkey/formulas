@@ -798,7 +798,12 @@ class Analisis(Backup):
                         'ni*(xi-media)2': 'Ni*(Xi-Media)2', 
                         'ni*(xi-media)3': 'Ni*(Xi-Media)3', 
                         'ni*(xi-media)4': 'Ni*(Xi-Media)4',
-                        'xiyi': 'Xi*Yi'
+                        'yi2': 'Yi2',
+                        'xiyi': 'Xi*Yi',
+                        'yi*ni': 'Yi*Ni',
+                        'yi*ni2': 'Yi*Ni2',
+                        'xi*yi*ni': 'Xi*Yi*Ni'
+
                         }
 
     def __creacion_columnas_estadisticas__(self):
@@ -857,15 +862,32 @@ class Analisis(Backup):
         elif type(self) == AnalisisBivariada:
             xi =         self.tabla_estadistica[self.__nombre_columna_xi__]
             yi =         self.tabla_estadistica[self.__nombre_columna_yi__]
-
+            
+            # el Try es por si los datos de xi y yi no son numericos
             try:
+                
+                xi2 =           self.tabla_estadistica[self.__nombres_columnas_estadisticas__['xi2']] = xi ** 2
+                yi2 =           self.tabla_estadistica[self.__nombres_columnas_estadisticas__['yi2']] = yi ** 2
+                xiyi =          self.tabla_estadistica[self.__nombres_columnas_estadisticas__['xiyi']] = xi * yi
+                
+                
 
-                xiyi =       self.tabla_estadistica[self.__nombres_columnas_estadisticas__['xiyi']] = xi * yi
+                if self.__agrupados__ == True:
+
+                    xi_ni =         self.tabla_estadistica[self.__nombres_columnas_estadisticas__['xi*ni']]     = xi * fa
+                    xi_ni2 =        self.tabla_estadistica[self.__nombres_columnas_estadisticas__['xi*ni2']]    = xi2 * fa
+
+                    yi_ni =         self.tabla_estadistica[self.__nombres_columnas_estadisticas__['yi*ni']]     = yi * fa
+                    yi_ni2 =        self.tabla_estadistica[self.__nombres_columnas_estadisticas__['yi*ni2']]    = yi2 * fa
+                    
+                    xi_yi_ni =      self.tabla_estadistica[self.__nombres_columnas_estadisticas__['xi*yi*ni']]  = xi * yi * fa
+                    
+
+
+
 
             except:
                 print('no se pudo')
-                print(xi)
-                print(yi)
                 pass
         
         else:
@@ -873,35 +895,63 @@ class Analisis(Backup):
 
     @property
     def media(self):
+        
         xi = self.__xi__
         ni = self.__fa__        
-        
-        if type(self) == AnalisisUnivariada:    
-            #xi = self.__xi__
-            #ni = self.__fa__
+        total_n = self.__total_n__
 
-            if self.__agrupados__ == False:
+        if self.__agrupados__ == False:
 
-                media = xi.mean()
+            media_xi = xi.mean()
 
-            else:
-                
-                #Si los datos estan agrupados por rangos
+        else:
+            
+            #Si los datos estan agrupados por rangos
+            if type(self) == AnalisisUnivariada:
                 if self.__mc__ is not None:
                     xi = self.__mc__
 
-                
-                sumatoria_ni = ni.sum()
-                sumatoria_ni_xi = (ni * xi).sum()
+            sumatoria_ni_xi = (ni * xi).sum()
 
-                media = sumatoria_ni_xi / sumatoria_ni
+            media_xi = sumatoria_ni_xi / total_n
             
-            return media
+        if type(self) == AnalisisUnivariada:
+            return media_xi
         
         if type(self) == AnalisisBivariada:
             yi = self.__yi__
 
+            if self.__agrupados__ == False:
+                media_yi = yi.mean()
+            
+            else:
 
+                sumatoria_ni_yi = (ni* yi).sum()
+
+                media_yi = sumatoria_ni_yi / total_n
+
+            return media_xi, media_yi
+
+    @property
+    def varianza(self):
+        muestra = self.__muestra__
+        
+        xi = self.__xi__
+        nixi2 = self.__nixi2__
+        n = self.__total_n__
+        media = self.media
+
+        if self.__agrupados__ == True:
+            varianza = ((sum(nixi2) / n) - (media ** 2))
+            
+
+        else:
+            if muestra == True:
+                varianza = variance(xi)
+            else:
+                varianza = pvariance(xi)
+        
+        return varianza
 
 
 class AnalisisUnivariada(Analisis):
@@ -1182,7 +1232,7 @@ class AnalisisUnivariada(Analisis):
         return resultado
 
 
-    @property
+    '''@property
     def media(self):
             
         xi = self.__xi__
@@ -1204,7 +1254,7 @@ class AnalisisUnivariada(Analisis):
 
             media = sumatoria_ni_xi / sumatoria_ni
         
-        return media
+        return media'''
 
     @property
     def mediana(self):
@@ -1950,14 +2000,28 @@ class AnalisisBivariada(Analisis, TablaPivote):
 
     def covarianza(self):
 
-        xi =         self.tabla_estadistica[self.__nombre_columna_xi__]
-        yi =         self.tabla_estadistica[self.__nombre_columna_yi__]
-        xiyi =       self.tabla_estadistica[self.__nombres_columnas_estadisticas__['xiyi']]
-        n =          self.__total_n__
+        if self.__agrupados__ == False:
+            xi =         self.tabla_estadistica[self.__nombre_columna_xi__]
+            yi =         self.tabla_estadistica[self.__nombre_columna_yi__]
+            xiyi =       self.tabla_estadistica[self.__nombres_columnas_estadisticas__['xiyi']]
+            n =          self.__total_n__
 
-        media_xi =  sum(xi)/len(xi)
-        media_yi =  sum(yi)/len(yi)
-        suma_xiyi = sum(xiyi)
+            media_xi =  self.media[0]
+            media_yi =  self.media[1]
+
+            suma_xiyi = xiyi.sum()
+        
+        else:
+            xi_ni =         self.tabla_estadistica[self.__nombres_columnas_estadisticas__['xi*ni']]
+            yi_ni =         self.tabla_estadistica[self.__nombres_columnas_estadisticas__['yi*ni']]
+            xi_yi_ni =      self.tabla_estadistica[self.__nombres_columnas_estadisticas__['xi*yi*ni']]
+
+
+            xini_sum =      xi_ni.sum()
+            yini_sum =      yi_ni.sum()
+            xiyini_sum =    xi_yi_ni.sum()
+            media_xi = self.media[0]
+            media_yi = self.media[1]
 
         covarianza = (suma_xiyi / n) - (media_xi * media_yi)
 
