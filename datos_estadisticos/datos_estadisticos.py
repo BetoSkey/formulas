@@ -14,6 +14,7 @@ class Backup:
 
         if type(self) == DatosBivariada or type(self) == AnalisisBivariada:
 
+            self.__yi_en_columnas_backup__ = copy.copy(self.__yi_en_columnas__)
             self.__columna_yi_backup__ = copy.copy(self.__columna_yi__)
             self.__nombre_columna_yi_backup__ = copy.copy(self.__nombre_columna_yi__)
             self.__yi_name_backup__ = copy.copy(self.__yi__.name)
@@ -40,6 +41,7 @@ class Backup:
 
         if type(self) == DatosBivariada or type(self) == AnalisisBivariada:
             
+            self.__yi_en_columnas__ = self.__yi_en_columnas_backup__
             self.__columna_yi__ = self.__columna_yi_backup__
             self.__nombre_columna_yi__ = self.__nombre_columna_yi_backup__
             self.__yi__.name = self.__yi_name_backup__
@@ -180,18 +182,34 @@ class DatosEstadisticos(Backup):
         self.__xi_es_index__ = xi_es_index
         self.__muestra__ = muestra
 
+    def __reubicar_columna_fa__(self):
+        
+        # Si self.__columna_fa__ es str se mantiene el nombre ya que pandas lo tiene seleccionado con el nombre de la columna, si es un numero, se debe aumentar en 1
+        if type(self.__columna_fa__) != str:
+            
+            self.__columna_fa__ = self.__columna_fa__ + 1
+        
     def __quitar_xi_de_index__(self):
         if type(self) == DatosUnivariada:
             if (self.__xi_es_index__ == True) or (len(self.datos.columns)  == 1 and self.__agrupados__ == True):
-                
+
                 self.datos.reset_index(inplace= True)
                 self.datos.rename(mapper = {self.datos.columns[0]: self.__repr_xi__}, axis='columns', inplace=True)
-                self.__columna_fa__ = 1
+
+                self.__reubicar_columna_fa__()
+
                 self.__xi_es_index__ = False
-        else:
+
+        elif type(self) == DatosBivariada:
             if (self.__xi_es_index__ == True) or (len(self.datos.columns)  == 2 and self.__agrupados__ == True):
 
                 raise ValueError('Xi no puede estar en index para DatosBivariada')
+        
+        else:
+            raise ValueError('type no reconocido')
+
+    def __quitar_index__(self):
+        pass
 
     def __dar_formato_datos__(self):
         
@@ -555,15 +573,12 @@ class DatosUnivariada(DatosEstadisticos):
             {self.datos._repr_html_()}'''
 
 class DatosBivariada(DatosEstadisticos, TablaPivote):
-    def __init__(self, datos, titulo, repr_xi, repr_yi, repr_fa, columna_xi, columna_yi, columna_fa=0, muestra=True, agrupados=False, xi_es_index=False):
+    def __init__(self, datos, titulo, repr_xi, repr_yi, repr_fa, columna_xi, columna_yi, columna_fa=0, muestra=True, agrupados=False, xi_es_index=False, yi_en_columnas=False):
         super().__init__(datos, titulo, repr_xi, repr_fa, agrupados, columna_xi, columna_fa, xi_es_index, muestra)
         
-        self.__repr_xi__ = repr_xi
         self.__repr_yi__ = repr_yi
-        self.__repr_fa__ = repr_fa
-        self.__columna_xi__ = columna_xi
         self.__columna_yi__ = columna_yi
-        self.__columna_fa__ = columna_fa
+        self.__yi_en_columnas__ = yi_en_columnas
         
         self.__dar_formato_datos__()
         self.__quitar_xi_de_index__()
@@ -576,7 +591,7 @@ class DatosBivariada(DatosEstadisticos, TablaPivote):
     def agrupar(self):
         index = None
         totales = False
-        tipo = 'relativa'
+        tipo = None
 
         try:
             self.__regresar_backup__()
@@ -737,6 +752,8 @@ class Analisis(Backup):
         self.__fa_backup__ = datos.__fa_backup__
 
         if type(self) == DatosBivariada or type(self) == AnalisisBivariada:
+            
+            self.__yi_en_columnas_backup__ = datos.__yi_en_columnas_backup__
             self.__columna_yi_backup__ = datos.__columna_yi_backup__
             self.__nombre_columna_yi_backup__ = datos.__nombre_columna_yi_backup__
             self.__yi_name_backup__ = datos.__yi_name_backup__
@@ -755,28 +772,30 @@ class Analisis(Backup):
             self.__agrupados__ = datos.__agrupados__
             self.__xi_es_index__ = datos.__xi_es_index__
             self.__muestra__ = datos.__muestra__
+            self.__columna_xi__ = datos.__columna_xi__
+            self.__repr_xi__ = datos.__repr_xi__
             self.__nombre_columna_xi__ = datos.__nombre_columna_xi__
-            self.__nombre_columna_fa__ = datos.__nombre_columna_fa__
             self.__xi__ = datos.__xi__
+            self.__columna_fa__ = datos.__columna_fa__
+            self.__repr_fa__ = datos.__repr_fa__
+            self.__nombre_columna_fa__ = datos.__nombre_columna_fa__
             self.__fa__ = datos.__fa__
             self.__total_n__ = datos.__total_n__
             
             if type(self) == AnalisisUnivariada:
-                self.__repr_xi__ = datos.__repr_xi__                
-                self.__repr_fa__ = datos.__repr_fa__
-                self.__columna_xi__ = datos.__columna_xi__                
-                self.__columna_fa__ = datos.__columna_fa__                
 
-            if type(self) ==  AnalisisBivariada:
+                pass                
 
-                self.__repr_xi__ = datos.__repr_xi__
+            elif type(self) ==  AnalisisBivariada:
+                
+                self.__yi_en_columnas__ = datos.__yi_en_columnas__
                 self.__repr_yi__ = datos.__repr_yi__
-                self.__repr_fa__ = datos.__repr_fa__
-                self.__columna_xi__ = datos.__columna_xi__
                 self.__columna_yi__ = datos.__columna_yi__
                 self.__nombre_columna_yi__ = datos.__nombre_columna_yi__
-                self.__columna_fa__ = datos.__columna_fa__
-                self.__yi__ = datos.__yi__            
+                self.__yi__ = datos.__yi__      
+
+            else:
+                raise ValueError('Type no reconocido')      
 
     def __crear_tabla_estadistica__(self):
 
@@ -793,7 +812,7 @@ class Analisis(Backup):
                         'fra': 'FRA', 
                         'xi2': 'Xi2', 
                         'xi*ni': 'Xi*Ni', 
-                        'ni*xi2': 'Ni*Xi2', 
+                        'xi2*ni': 'Xi2*Ni', 
                         'xi-media': 'Xi-Media', 
                         'ni*(xi-media)2': 'Ni*(Xi-Media)2', 
                         'ni*(xi-media)3': 'Ni*(Xi-Media)3', 
@@ -801,7 +820,7 @@ class Analisis(Backup):
                         'yi2': 'Yi2',
                         'xiyi': 'Xi*Yi',
                         'yi*ni': 'Yi*Ni',
-                        'yi*ni2': 'Yi*Ni2',
+                        'yi2*ni': 'Yi2*Ni',
                         'xi*yi*ni': 'Xi*Yi*Ni'
 
                         }
@@ -837,7 +856,7 @@ class Analisis(Backup):
                 fr =                    self.tabla_estadistica[self.__nombres_columnas_estadisticas__['fr']] = fa / total_n
                 fra =                   self.tabla_estadistica[self.__nombres_columnas_estadisticas__['fra']] = fr.cumsum()
                 nixi =                  self.tabla_estadistica[self.__nombres_columnas_estadisticas__['xi*ni']] = xi * fa
-                nixi2 =                 self.tabla_estadistica[self.__nombres_columnas_estadisticas__['ni*xi2']] = xi2 * fa
+                nixi2 =                 self.tabla_estadistica[self.__nombres_columnas_estadisticas__['xi2*ni']] = xi2 * fa
                 
 
                 # Dataframe de xi-media y ni para formula .apply
@@ -875,10 +894,10 @@ class Analisis(Backup):
                 if self.__agrupados__ == True:
 
                     xi_ni =         self.tabla_estadistica[self.__nombres_columnas_estadisticas__['xi*ni']]     = xi * fa
-                    xi_ni2 =        self.tabla_estadistica[self.__nombres_columnas_estadisticas__['xi*ni2']]    = xi2 * fa
+                    xi_ni2 =        self.tabla_estadistica[self.__nombres_columnas_estadisticas__['xi2*ni']]    = xi2 * fa
 
                     yi_ni =         self.tabla_estadistica[self.__nombres_columnas_estadisticas__['yi*ni']]     = yi * fa
-                    yi_ni2 =        self.tabla_estadistica[self.__nombres_columnas_estadisticas__['yi*ni2']]    = yi2 * fa
+                    yi_ni2 =        self.tabla_estadistica[self.__nombres_columnas_estadisticas__['yi2*ni']]    = yi2 * fa
                     
                     xi_yi_ni =      self.tabla_estadistica[self.__nombres_columnas_estadisticas__['xi*yi*ni']]  = xi * yi * fa
                     
@@ -887,7 +906,7 @@ class Analisis(Backup):
 
 
             except:
-                print('no se pudo')
+                print('No se pudieron calcular columnas de frecuencias por contener datos no numericos')
                 pass
         
         else:
@@ -895,63 +914,104 @@ class Analisis(Backup):
 
     @property
     def media(self):
-        
-        xi = self.__xi__
-        ni = self.__fa__        
-        total_n = self.__total_n__
-
-        if self.__agrupados__ == False:
-
-            media_xi = xi.mean()
-
-        else:
-            
-            #Si los datos estan agrupados por rangos
-            if type(self) == AnalisisUnivariada:
-                if self.__mc__ is not None:
-                    xi = self.__mc__
-
-            sumatoria_ni_xi = (ni * xi).sum()
-
-            media_xi = sumatoria_ni_xi / total_n
-            
-        if type(self) == AnalisisUnivariada:
-            return media_xi
-        
-        if type(self) == AnalisisBivariada:
-            yi = self.__yi__
+        try: 
+            xi = self.__xi__
+            ni = self.__fa__        
+            total_n = self.__total_n__
 
             if self.__agrupados__ == False:
-                media_yi = yi.mean()
-            
+
+                media_xi = xi.mean()
+
             else:
+                
+                #Si los datos estan agrupados por rangos
+                if type(self) == AnalisisUnivariada:
+                    if self.__mc__ is not None:
+                        xi = self.__mc__
 
-                sumatoria_ni_yi = (ni* yi).sum()
+                sumatoria_ni_xi = (ni * xi).sum()
 
-                media_yi = sumatoria_ni_yi / total_n
+                media_xi = sumatoria_ni_xi / total_n
+                
+            if type(self) == AnalisisUnivariada:
+                return media_xi
+            
+            if type(self) == AnalisisBivariada:
+                yi = self.__yi__
 
-            return media_xi, media_yi
+                if self.__agrupados__ == False:
+                    media_yi = yi.mean()
+                
+                else:
+
+                    sumatoria_ni_yi = (ni* yi).sum()
+
+                    media_yi = sumatoria_ni_yi / total_n
+
+                return media_xi, media_yi
+        
+        except:
+            
+            raise ValueError('No se puede calcular la media de datos no numericos.')
 
     @property
     def varianza(self):
         muestra = self.__muestra__
         
-        xi = self.__xi__
-        nixi2 = self.__nixi2__
-        n = self.__total_n__
-        media = self.media
+        xi =            self.tabla_estadistica[self.__nombre_columna_xi__]
+        n =             self.__total_n__
+        media =         self.media
 
-        if self.__agrupados__ == True:
-            varianza = ((sum(nixi2) / n) - (media ** 2))
+        if type(self) == AnalisisBivariada:
+            media_xi =  media[0]
+            media_yi =  media[1]
+            yi =        self.tabla_estadistica[self.__nombre_columna_yi__]
+
+            if self.__agrupados__ == True:
+                raise ValueError('Aun no se crea la formula para varianza para datos agrupados para AnalisisBivariada.')
             
-
-        else:
-            if muestra == True:
-                varianza = variance(xi)
             else:
-                varianza = pvariance(xi)
+                if muestra == True:
+                    varianza_xi = variance(xi)
+                    varianza_yi = variance(yi)
+                else:
+                    varianza_xi = pvariance(xi)
+                    varianza_yi = pvariance(yi)
+
+            return varianza_xi, varianza_yi
+
+        else:            
+
+            if self.__agrupados__ == True:
+
+                
+                nixi2 =     self.tabla_estadistica[self.__nombres_columnas_estadisticas__['xi2*ni']]
+                varianza_xi =  ((nixi2.sum() / n) - (media ** 2))
+                
+
+            else:
+                if muestra == True:
+                    varianza_xi = variance(xi)
+                else:
+                    varianza_xi = pvariance(xi)
         
-        return varianza
+
+            return varianza_xi
+
+
+    @property
+    def desviacion_estandar(self):
+        if type(self) == AnalisisBivariada:
+            stdev_xi = self.varianza[0] ** .5
+            stdev_yi = self.varianza[0] ** .5
+
+            return stdev_xi, stdev_yi
+        
+        else:
+            stdev_xi = self.varianza ** .5
+
+            return stdev_xi
 
 
 class AnalisisUnivariada(Analisis):
@@ -997,7 +1057,7 @@ class AnalisisUnivariada(Analisis):
                     self.__nombres_columnas_estadisticas__['mc'],
                     self.__nombres_columnas_estadisticas__['xi2'],
                     self.__nombres_columnas_estadisticas__['xi*ni'],
-                    self.__nombres_columnas_estadisticas__['ni*xi2'],
+                    self.__nombres_columnas_estadisticas__['xi2*ni'],
                     self.__nombres_columnas_estadisticas__['xi-media'],
                     self.__nombres_columnas_estadisticas__['ni*(xi-media)2'],
                     self.__nombres_columnas_estadisticas__['ni*(xi-media)3'],
@@ -1014,7 +1074,7 @@ class AnalisisUnivariada(Analisis):
                     self.__nombres_columnas_estadisticas__['fra'],
                     self.__nombres_columnas_estadisticas__['xi2'],
                     self.__nombres_columnas_estadisticas__['xi*ni'],
-                    self.__nombres_columnas_estadisticas__['ni*xi2'],
+                    self.__nombres_columnas_estadisticas__['xi2*ni'],
                     self.__nombres_columnas_estadisticas__['xi-media'],
                     self.__nombres_columnas_estadisticas__['ni*(xi-media)2'],
                     self.__nombres_columnas_estadisticas__['ni*(xi-media)3'],
@@ -1403,7 +1463,7 @@ class AnalisisUnivariada(Analisis):
         
         return rango_recorrido
 
-    @property
+    '''@property
     def varianza(self):
         muestra = self.__muestra__
         
@@ -1422,14 +1482,14 @@ class AnalisisUnivariada(Analisis):
             else:
                 varianza = pvariance(xi)
         
-        return varianza
+        return varianza'''
 
-    @property
+    '''@property
     def desviacion_estandar(self):
 
         stdev = self.varianza ** .5
 
-        return stdev
+        return stdev'''
 
     @property
     def coeficiente_pearson(self):
@@ -1998,6 +2058,7 @@ class AnalisisBivariada(Analisis, TablaPivote):
         
         return self
 
+    @property
     def covarianza(self):
 
         if self.__agrupados__ == False:
@@ -2012,20 +2073,27 @@ class AnalisisBivariada(Analisis, TablaPivote):
             suma_xiyi = xiyi.sum()
         
         else:
-            xi_ni =         self.tabla_estadistica[self.__nombres_columnas_estadisticas__['xi*ni']]
-            yi_ni =         self.tabla_estadistica[self.__nombres_columnas_estadisticas__['yi*ni']]
+
             xi_yi_ni =      self.tabla_estadistica[self.__nombres_columnas_estadisticas__['xi*yi*ni']]
 
-
-            xini_sum =      xi_ni.sum()
-            yini_sum =      yi_ni.sum()
-            xiyini_sum =    xi_yi_ni.sum()
+            suma_xiyi =    xi_yi_ni.sum()
             media_xi = self.media[0]
             media_yi = self.media[1]
 
         covarianza = (suma_xiyi / n) - (media_xi * media_yi)
 
         return covarianza
+    @property
+    def correlacion(self):
+        
+        covarianza = self.covarianza
+        stdev_xi = self.desviacion_estandar[0]
+        stdev_yi = self.desviacion_estandar[1]
+
+        correlacion = covarianza / (stdev_xi * stdev_yi)
+
+        return correlacion
+
 
     def _repr_html_(self):
 
