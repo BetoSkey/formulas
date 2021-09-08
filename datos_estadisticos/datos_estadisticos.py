@@ -190,26 +190,44 @@ class DatosEstadisticos(Backup):
             self.__columna_fa__ = self.__columna_fa__ + 1
         
     def __quitar_xi_de_index__(self):
+
+        self.datos.reset_index(inplace= True)
+        self.datos.rename(mapper = {self.datos.columns[0]: self.__repr_xi__}, axis='columns', inplace=True)
+
+        self.__reubicar_columna_fa__()
+
+        self.__xi_es_index__ = False
+
+    def __melt_datos__(self):
+        if self.__yi_en_columnas__ == True:
+
+            self.datos = self.datos.melt(
+                id_vars=self.__nombre_columna_xi__, var_name= self.__repr_yi__, value_name=self.__repr_fa__).sort_values(
+                    self.__nombre_columna_xi__)
+
+            self.datos.reset_index(drop=True, inplace=True)
+
+            self.__agrupados__ = True
+            self.__yi_en_columnas__ = False
+            self.__columna_fa__ = self.__repr_fa__
+
+
+    def __quitar_indices__(self):
+
         if type(self) == DatosUnivariada:
             if (self.__xi_es_index__ == True) or (len(self.datos.columns)  == 1 and self.__agrupados__ == True):
-
-                self.datos.reset_index(inplace= True)
-                self.datos.rename(mapper = {self.datos.columns[0]: self.__repr_xi__}, axis='columns', inplace=True)
-
-                self.__reubicar_columna_fa__()
-
-                self.__xi_es_index__ = False
-
+                self.__quitar_xi_de_index__()
+        
         elif type(self) == DatosBivariada:
             if (self.__xi_es_index__ == True) or (len(self.datos.columns)  == 2 and self.__agrupados__ == True):
-
-                raise ValueError('Xi no puede estar en index para DatosBivariada')
-        
+                
+                self.__quitar_xi_de_index__()
+                self.__obtener_nombre_columnas__()
+                
+                self.__melt_datos__()
         else:
             raise ValueError('type no reconocido')
 
-    def __quitar_index__(self):
-        pass
 
     def __dar_formato_datos__(self):
         
@@ -338,7 +356,7 @@ class DatosUnivariada(DatosEstadisticos):
 
         self.__dar_formato_datos__()
 
-        self.__quitar_xi_de_index__()
+        self.__quitar_indices__()
         
         self.__obtener_nombre_columnas__()
 
@@ -581,7 +599,7 @@ class DatosBivariada(DatosEstadisticos, TablaPivote):
         self.__yi_en_columnas__ = yi_en_columnas
         
         self.__dar_formato_datos__()
-        self.__quitar_xi_de_index__()
+        self.__quitar_indices__()
         self.__obtener_nombre_columnas__()
         self.__obtener_xi_yi_fa__()
         self.__ordenar_datos__()
@@ -2060,12 +2078,13 @@ class AnalisisBivariada(Analisis, TablaPivote):
 
     @property
     def covarianza(self):
-
+        n =          self.__total_n__
+        
         if self.__agrupados__ == False:
             xi =         self.tabla_estadistica[self.__nombre_columna_xi__]
             yi =         self.tabla_estadistica[self.__nombre_columna_yi__]
             xiyi =       self.tabla_estadistica[self.__nombres_columnas_estadisticas__['xiyi']]
-            n =          self.__total_n__
+            
 
             media_xi =  self.media[0]
             media_yi =  self.media[1]
