@@ -35,8 +35,6 @@ class Backup:
         self.__xi_backup__ = copy.copy(self.__xi__)
         self.__fa_backup__ = copy.copy(self.__fa__)
 
-
-
     def __regresar_backup__(self):
 
         if type(self) == DatosBivariada or type(self) == AnalisisBivariada:
@@ -63,8 +61,6 @@ class Backup:
         self.__xi__ = self.__xi_backup__
         self.__fa__ = self.__fa_backup__
             
-
-
     def datos_originales(self):
         try:
             self.__regresar_backup__()
@@ -166,11 +162,158 @@ class TablaPivote:
 
         return tabla_pivote
 
+class Display:
+    def __repr_analisis_univariada__(self):
+
+        if self.__agrupados__ == False:
+            return f'''
+            <body>
+                <h1>
+                    {self.__titulo__}
+                </h1>
+
+                <p align="left">
+                    <pre><strong><span style="font-size:110%">{'Datos Agrupados' if self.__agrupados__ ==True else 'Datos No Agrupados'}</span></strong></br></pre>
+                    <pre><strong><span style="font-size:110%">{'Muestra' if self.__muestra__ ==True else 'Poblacion'}</span></strong></br></pre>
+                    <pre>Total n: <strong><span style="font-size:110%">{self.__total_n__}</span></strong> {self.__repr_fa__}</br></pre>
+                </p>
+
+                <table border="1" align="center" cellspacing="0" cellpadding="5">
+                    <tr valign="bottom" align="center">
+                        <th width="300"><pre><span style="font-size:110%">Variable Aleatoria (Xi)</span></br></pre></pre></th>
+                        <th width="300"><pre><span style="font-size:110%">Elementos (ni)</span></br></pre></pre></th>	
+                    </tr>
+                    <tr>
+                        <td>
+                            <table border="1" align="center" cellspacing="0" cellpadding="5"  width="300"  height="20">
+                                <tr>
+                                <td> Representa:</td>
+                                <td><strong> {self.__repr_xi__}</strong></td>
+                                </tr>
+                                <tr>
+                                <td> Columna Xi:</td>
+                                <td><strong> {self.__nombre_columna_xi__}</strong></td>
+                                </tr>
+                            </table>
+                        </td>
+                        <td>
+                            <table border="1" align="center" cellspacing="0" cellpadding="5"  width="300"  height="20">
+                            <tr>
+                                <td>Representa:</td>
+                                <td><strong> {self.__repr_fa__}</strong></td>
+                                </tr>
+                            </table>
+                        </td>	
+                    </tr>
+                    <tr>
+                    </table>
+            </body>
+            {self.tabla_estadistica._repr_html_()}
+            '''
+
+        else:
+            return f'''
+            <body>
+                <h1>
+                    {self.__titulo__}
+                </h1>
+
+                <p align="left">
+                    <pre><strong><span style="font-size:110%">{'Datos Agrupados' if self.__agrupados__ ==True else 'Datos No Agrupados'}</span></strong></br></pre>
+                    <pre><strong><span style="font-size:110%">{'Muestra' if self.__muestra__ ==True else 'Poblacion'}</span></strong></br></pre>
+                    <pre>Total n: <strong><span style="font-size:110%">{self.__total_n__}</span></strong> {self.__repr_fa__}</br></pre>
+                </p>
+
+                <table border="1" align="center" cellspacing="0" cellpadding="5">
+                    <tr valign="bottom" align="center">
+                        <th width="300"><pre><span style="font-size:110%">Variable Aleatoria (Xi)</span></br></pre></pre></th>
+                        <th width="300"><pre><span style="font-size:110%">Elementos (Fa/ni)</span></br></pre></pre></th>	
+                    </tr>
+                    <tr>
+                        <td>
+                            <table border="1" align="center" cellspacing="0" cellpadding="5"  width="300"  height="20">
+                                <tr>
+                                <td> Representa:</td>
+                                <td><strong> {self.__repr_xi__}</strong></td>
+                                </tr>
+                                <tr>
+                                <td> Columna Xi:</td>
+                                <td><strong> {self.__nombre_columna_xi__}</strong></td>
+                                </tr>
+                            </table>
+                        </td>
+                        <td>
+                            <table border="1" align="center" cellspacing="0" cellpadding="5"  width="300"  height="20">
+                            <tr>
+                                <td> Representa:</td>
+                                <td><strong> {self.__repr_fa__}</strong></td>
+                                </tr>
+                                <tr>
+                                <td> Columna Fa:</td>
+                                <td><strong> {self.__nombre_columna_fa__}</strong></td>
+                                </tr>
+                            </table>
+                        </td>	
+                    </tr>
+                    <tr>
+                    </table>
+            </body>
+            {self.tabla_estadistica._repr_html_()}'''
+
+    def __display_info_analisis_univariada__(self, dict_info):
+
+        titulo =            self.__titulo__
+        agrupados =         self.__agrupados__
+        muestra =           self.__muestra__
+
+        total_n =           dict_info['n']
+        media =             round(dict_info['media'], 4)
+        mediana =           round(dict_info['mediana'], 4)
+        moda =              round(dict_info['moda'], 4)
+        rango_recorrido =   dict_info['rango_recorrido'] if type(dict_info['rango_recorrido']) == str else round(dict_info['rango_recorrido'], 4)
+        varianza =          round(dict_info['varianza'], 4) 
+        stdev =             round(dict_info['stdev'], 4)
+        pearson =           round(dict_info['pearson'], 4)
+        bowley =            round(dict_info['bowley'], 4)
+        fisher =            round(dict_info['fisher'], 4)
+        cv =                round(dict_info['cv'], 4)
 
 
+        interpretacion_pearson =    self.__interpretaciones_para_info__(pearson, 'pearson')
+        
+        interpretacion_bowley =     self.__interpretaciones_para_info__(bowley, 'bowley')
+        
+        interpretacion_fisher =     self.__interpretaciones_para_info__(fisher, 'fisher')
+
+        interpretacion_cv =         self.__interpretaciones_para_info__(cv, 'coeficiente_variacion')
 
 
-class DatosEstadisticos(Backup):
+        display(HTML(f'''
+            <h1>
+                {titulo}
+            </h1>
+            <p align="left">
+            <pre><strong><span style="font-size:120%">{'Datos Agrupados' if agrupados == True else 'Datos no Agrupados'}</span></strong></br></pre>
+            <pre><strong><span style="font-size:120%">{'Muestra' if muestra == True else 'Poblacion'}</span></strong></br></pre>
+            <pre>Total n : <strong><span style="font-size:90%">{total_n} {self.__repr_fa__}</span></strong></br></pre>
+            </br>
+            <pre><strong><span style="font-size:120%">Variable Aleatoria "Xi": ({self.__repr_xi__})</span></strong></br></pre>
+            <pre>media:                        <strong><span style="font-size:90%">{media}</span></strong></br></pre>
+            <pre>mediana:                      <strong><span style="font-size:90%">{mediana}</span></strong></br></pre>
+            <pre>moda:                         <strong><span style="font-size:90%">{moda}</span></strong></br></pre>
+            <pre>rango recorrido:              <strong><span style="font-size:90%">{rango_recorrido}</span></strong></br></pre>
+            <pre>varianza:                     <strong><span style="font-size:90%">{varianza}</span></strong></br></pre>
+            <pre>desviacion tipica:            <strong><span style="font-size:90%">{stdev}</span></strong></br></pre>
+            <pre>coeficiente variacion:        <strong><span style="font-size:90%">{cv} ({interpretacion_cv})</span></strong></br></pre>
+            </br>
+            <pre><strong><span style="font-size:120%">Asimetria:</span></strong></br></pre>
+            <pre>pearson:           <strong><span style="font-size:90%">{pearson} ({interpretacion_pearson})</span></strong></br></pre>
+            <pre>bowley:            <strong><span style="font-size:90%">{bowley} ({interpretacion_bowley})</span></strong></br></pre>
+            <pre>fisher:            <strong><span style="font-size:90%">{fisher} ({interpretacion_fisher})</span></strong></br></pre>
+            '''))
+
+
+class DatosEstadisticos(Backup, Display):
     def __init__(self, datos, titulo, repr_xi, repr_fa, agrupados, columna_xi, columna_fa, xi_es_index, muestra):
         self.datos = datos
         self.__titulo__ = titulo
@@ -750,7 +893,7 @@ class DatosBivariada(DatosEstadisticos, TablaPivote):
 
 
 
-class Analisis(Backup):
+class Analisis(Backup, Display):
 
     def __init__(self, datos):
         
@@ -930,6 +1073,40 @@ class Analisis(Backup):
         else:
             raise ValueError('El type recibido no es DatosUnivariada ni DatosBivariada, revisar')
 
+    def __interpretaciones_para_info__(self, resultado, operacion):
+        
+        if operacion == 'pearson':
+            if resultado < 0:
+                interpretacion = 'Asimetrica Negativa'
+            elif resultado > 0:
+                interpretacion = 'Asimetrica Positiva'
+            else:
+                interpretacion = 'Simetrica'
+        
+        if operacion == 'bowley':
+            if resultado < 0:
+                interpretacion = 'Asimetrica Negativa'
+            elif resultado > 0:
+                interpretacion = 'Asimetrica Positiva'
+            else:
+                interpretacion = 'Simetrica'
+
+        if operacion == 'fisher':
+            if resultado < 0:
+                interpretacion = 'Asimetrica Negativa'
+            elif resultado > 0:
+                interpretacion = 'Asimetrica Positiva'
+            else:
+                interpretacion = 'Simetrica'
+        
+        if operacion == 'coeficiente_variacion':
+            if resultado <= .80:
+                interpretacion = 'Homogeneo'
+            else:
+                interpretacion = 'Heterogeneo'
+        
+        return interpretacion
+
     @property
     def media(self):
         try: 
@@ -1022,7 +1199,6 @@ class Analisis(Backup):
         
 
             return varianza_xi
-
 
     @property
     def desviacion_estandar(self):
@@ -1316,30 +1492,6 @@ class AnalisisUnivariada(Analisis):
         return resultado
 
 
-    '''@property
-    def media(self):
-            
-        xi = self.__xi__
-        ni = self.__fa__
-
-        if self.__agrupados__ == False:
-
-            media = xi.mean()
-
-        else:
-            
-            #Si los datos estan agrupados por rangos
-            if self.__mc__ is not None:
-                xi = self.__mc__
-
-            
-            sumatoria_ni = ni.sum()
-            sumatoria_ni_xi = (ni * xi).sum()
-
-            media = sumatoria_ni_xi / sumatoria_ni
-        
-        return media'''
-
     @property
     def mediana(self):
         
@@ -1487,34 +1639,6 @@ class AnalisisUnivariada(Analisis):
         
         return rango_recorrido
 
-    '''@property
-    def varianza(self):
-        muestra = self.__muestra__
-        
-        xi = self.__xi__
-        nixi2 = self.__nixi2__
-        n = self.__total_n__
-        media = self.media
-
-        if self.__agrupados__ == True:
-            varianza = ((sum(nixi2) / n) - (media ** 2))
-            
-
-        else:
-            if muestra == True:
-                varianza = variance(xi)
-            else:
-                varianza = pvariance(xi)
-        
-        return varianza'''
-
-    '''@property
-    def desviacion_estandar(self):
-
-        stdev = self.varianza ** .5
-
-        return stdev'''
-
     @property
     def coeficiente_pearson(self):
         '''
@@ -1607,77 +1731,27 @@ class AnalisisUnivariada(Analisis):
 
     @property
     def info(self):
-        titulo = self.__titulo__
-        agrupados = self.__agrupados__
-        muestra = self.__muestra__
 
-        total_n = self.__total_n__
-        media = self.media
-        mediana = self.mediana
-        moda = self.moda
-        rango_recorrido = self.rango_recorrido
-        varianza = self.varianza
-        stdev = self.desviacion_estandar
-        pearson = self.coeficiente_pearson
-        bowley = self.medida_bowley
-        fisher = self.medida_fisher
-        cv = self.coeficiente_variacion
+        total_n =           self.__total_n__
+        media =             self.media
+        mediana =           self.mediana
+        moda =              self.moda
+        rango_recorrido =   self.rango_recorrido
+        varianza =          self.varianza
+        stdev =             self.desviacion_estandar
+        pearson =           self.coeficiente_pearson
+        bowley =            self.medida_bowley
+        fisher =            self.medida_fisher
+        cv =                self.coeficiente_variacion
 
-        if pearson < 0:
-            interpretacion_pearson = 'Asimetrica Negativa'
-        elif pearson > 0:
-            interpretacion_pearson = 'Asimetrica Positiva'
-        else:
-            interpretacion_pearson = 'Simetrica'
-        
-        if bowley < 0:
-            interpretacion_bowley = 'Asimetrica Negativa'
-        elif pearson > 0:
-            interpretacion_bowley = 'Asimetrica Positiva'
-        else:
-            interpretacion_bowley = 'Simetrica'
-
-        if fisher < 0:
-            interpretacion_fisher = 'Asimetrica Negativa'
-        elif pearson > 0:
-            interpretacion_fisher = 'Asimetrica Positiva'
-        else:
-            interpretacion_fisher = 'Simetrica'
-
-        if cv <= .80:
-            interpretacion_cv = 'Homogeneo'
-        else:
-            interpretacion_cv = 'Heterogeneo'
-
-        display(HTML(f'''
-            <h1>
-                {titulo}
-            </h1>
-            <p align="left">
-            <pre><strong><span style="font-size:120%">{'Datos Agrupados' if agrupados == True else 'Datos no Agrupados'}</span></strong></br></pre>
-            <pre><strong><span style="font-size:120%">{'Muestra' if muestra == True else 'Poblacion'}</span></strong></br></pre>
-            <pre>Total n : <strong><span style="font-size:90%">{total_n} {self.__repr_fa__}</span></strong></br></pre>
-            </br>
-            <pre><strong><span style="font-size:120%">Variable Aleatoria "Xi": ({self.__repr_xi__})</span></strong></br></pre>
-            <pre>media:                        <strong><span style="font-size:90%">{round(media, 4)}</span></strong></br></pre>
-            <pre>mediana:                      <strong><span style="font-size:90%">{round(mediana, 4)}</span></strong></br></pre>
-            <pre>moda:                         <strong><span style="font-size:90%">{round(moda, 4)}</span></strong></br></pre>
-            <pre>rango recorrido:              <strong><span style="font-size:90%">{rango_recorrido if type(rango_recorrido) == str else round(rango_recorrido, 4)}</span></strong></br></pre>
-            <pre>varianza:                     <strong><span style="font-size:90%">{round(varianza, 4)}</span></strong></br></pre>
-            <pre>desviacion tipica:            <strong><span style="font-size:90%">{round(stdev, 4)}</span></strong></br></pre>
-            <pre>coeficiente variacion:        <strong><span style="font-size:90%">{round(cv, 4)} ({interpretacion_cv})</span></strong></br></pre>
-            </br>
-            <pre><strong><span style="font-size:120%">Asimetria:</span></strong></br></pre>
-            <pre>pearson:           <strong><span style="font-size:90%">{round(pearson, 4)} ({interpretacion_pearson})</span></strong></br></pre>
-            <pre>bowley:            <strong><span style="font-size:90%">{round(bowley, 4)} ({interpretacion_bowley})</span></strong></br></pre>
-            <pre>fisher:            <strong><span style="font-size:90%">{round(fisher, 4)} ({interpretacion_fisher})</span></strong></br></pre>
-            '''))
-        
         dict_info = {
             'n': total_n, 'media': media, 'mediana': mediana, 'moda': moda, 
             'rango_recorrido': rango_recorrido, 'varianza': varianza, 'stdev': stdev, 'cv': cv, 
             'pearson': pearson, 'bowley': bowley, 'fisher': fisher}
-        
+
+        self.__display_info_analisis_univariada__(dict_info=dict_info)
+
+
         return dict_info
 
     def cuantiles(self, n=4, method='exclusive'):
@@ -1954,101 +2028,10 @@ class AnalisisUnivariada(Analisis):
         '''
 
     def _repr_html_(self):
-
-        if self.__agrupados__ == False:
-            return f'''
-            <body>
-                <h1>
-                    {self.__titulo__}
-                </h1>
-
-                <p align="left">
-                    <pre><strong><span style="font-size:110%">{'Datos Agrupados' if self.__agrupados__ ==True else 'Datos No Agrupados'}</span></strong></br></pre>
-                    <pre><strong><span style="font-size:110%">{'Muestra' if self.__muestra__ ==True else 'Poblacion'}</span></strong></br></pre>
-                    <pre>Total n: <strong><span style="font-size:110%">{self.__total_n__}</span></strong> {self.__repr_fa__}</br></pre>
-                </p>
-
-                <table border="1" align="center" cellspacing="0" cellpadding="5">
-                    <tr valign="bottom" align="center">
-                        <th width="300"><pre><span style="font-size:110%">Variable Aleatoria (Xi)</span></br></pre></pre></th>
-                        <th width="300"><pre><span style="font-size:110%">Elementos (ni)</span></br></pre></pre></th>	
-                    </tr>
-                    <tr>
-                        <td>
-                            <table border="1" align="center" cellspacing="0" cellpadding="5"  width="300"  height="20">
-                                <tr>
-                                <td> Representa:</td>
-                                <td><strong> {self.__repr_xi__}</strong></td>
-                                </tr>
-                                <tr>
-                                <td> Columna Xi:</td>
-                                <td><strong> {self.__nombre_columna_xi__}</strong></td>
-                                </tr>
-                            </table>
-                        </td>
-                        <td>
-                            <table border="1" align="center" cellspacing="0" cellpadding="5"  width="300"  height="20">
-                            <tr>
-                                <td>Representa:</td>
-                                <td><strong> {self.__repr_fa__}</strong></td>
-                                </tr>
-                            </table>
-                        </td>	
-                    </tr>
-                    <tr>
-                    </table>
-            </body>
-            {self.tabla_estadistica._repr_html_()}
-            '''
-
-        else:
-            return f'''
-            <body>
-                <h1>
-                    {self.__titulo__}
-                </h1>
-
-                <p align="left">
-                    <pre><strong><span style="font-size:110%">{'Datos Agrupados' if self.__agrupados__ ==True else 'Datos No Agrupados'}</span></strong></br></pre>
-                    <pre><strong><span style="font-size:110%">{'Muestra' if self.__muestra__ ==True else 'Poblacion'}</span></strong></br></pre>
-                    <pre>Total n: <strong><span style="font-size:110%">{self.__total_n__}</span></strong> {self.__repr_fa__}</br></pre>
-                </p>
-
-                <table border="1" align="center" cellspacing="0" cellpadding="5">
-                    <tr valign="bottom" align="center">
-                        <th width="300"><pre><span style="font-size:110%">Variable Aleatoria (Xi)</span></br></pre></pre></th>
-                        <th width="300"><pre><span style="font-size:110%">Elementos (Fa/ni)</span></br></pre></pre></th>	
-                    </tr>
-                    <tr>
-                        <td>
-                            <table border="1" align="center" cellspacing="0" cellpadding="5"  width="300"  height="20">
-                                <tr>
-                                <td> Representa:</td>
-                                <td><strong> {self.__repr_xi__}</strong></td>
-                                </tr>
-                                <tr>
-                                <td> Columna Xi:</td>
-                                <td><strong> {self.__nombre_columna_xi__}</strong></td>
-                                </tr>
-                            </table>
-                        </td>
-                        <td>
-                            <table border="1" align="center" cellspacing="0" cellpadding="5"  width="300"  height="20">
-                            <tr>
-                                <td> Representa:</td>
-                                <td><strong> {self.__repr_fa__}</strong></td>
-                                </tr>
-                                <tr>
-                                <td> Columna Fa:</td>
-                                <td><strong> {self.__nombre_columna_fa__}</strong></td>
-                                </tr>
-                            </table>
-                        </td>	
-                    </tr>
-                    <tr>
-                    </table>
-            </body>
-            {self.tabla_estadistica._repr_html_()}'''
+        
+        display = self.__repr_analisis_univariada__()
+        return display
+        
 
 class AnalisisBivariada(Analisis, TablaPivote):
 
