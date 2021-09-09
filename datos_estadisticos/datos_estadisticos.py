@@ -978,6 +978,7 @@ class Analisis(Backup):
         muestra = self.__muestra__
         
         xi =            self.tabla_estadistica[self.__nombre_columna_xi__]
+        
         n =             self.__total_n__
         media =         self.media
 
@@ -985,10 +986,15 @@ class Analisis(Backup):
             media_xi =  media[0]
             media_yi =  media[1]
             yi =        self.tabla_estadistica[self.__nombre_columna_yi__]
-
-            if self.__agrupados__ == True:
-                raise ValueError('Aun no se crea la formula para varianza para datos agrupados para AnalisisBivariada.')
             
+            if self.__agrupados__ == True:
+                #raise ValueError('Aun no se crea la formula para varianza para datos agrupados para AnalisisBivariada.')
+                nixi2 = self.tabla_estadistica[self.__nombres_columnas_estadisticas__['xi2*ni']]
+                niyi2 = self.tabla_estadistica[self.__nombres_columnas_estadisticas__['yi2*ni']]
+
+                varianza_xi = ((nixi2.sum() / n) - (media_xi ** 2))
+                varianza_yi = ((niyi2.sum() / n) - (media_yi ** 2))
+
             else:
                 if muestra == True:
                     varianza_xi = variance(xi)
@@ -1022,7 +1028,7 @@ class Analisis(Backup):
     def desviacion_estandar(self):
         if type(self) == AnalisisBivariada:
             stdev_xi = self.varianza[0] ** .5
-            stdev_yi = self.varianza[0] ** .5
+            stdev_yi = self.varianza[1] ** .5
 
             return stdev_xi, stdev_yi
         
@@ -2079,7 +2085,7 @@ class AnalisisBivariada(Analisis, TablaPivote):
     @property
     def covarianza(self):
         n =          self.__total_n__
-        
+
         if self.__agrupados__ == False:
             xi =         self.tabla_estadistica[self.__nombre_columna_xi__]
             yi =         self.tabla_estadistica[self.__nombre_columna_yi__]
