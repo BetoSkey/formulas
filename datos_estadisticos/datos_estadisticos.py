@@ -260,6 +260,130 @@ class Display:
             </body>
             {self.tabla_estadistica._repr_html_()}'''
 
+
+    def __repr_analisis_bivariada__(self):
+
+        if self.__agrupados__ == False:
+            return f'''
+            <body>
+                <h1>
+                    {self.__titulo__}
+                </h1>
+
+                <p align="left">
+                    <pre><strong><span style="font-size:110%">{'Datos Agrupados' if self.__agrupados__ ==True else 'Datos No Agrupados'}</span></strong></br></pre>
+                    <pre><strong><span style="font-size:110%">{'Muestra' if self.__muestra__ ==True else 'Poblacion'}</span></strong></br></pre>
+                    <pre>Total n: <strong><span style="font-size:110%">{self.__total_n__}</span></strong> {self.__repr_fa__}</br></pre>
+                </p>
+
+                <table border="1" align="center" cellspacing="0" cellpadding="5">
+                    <tr valign="bottom" align="center">
+                        <th width="300"><pre><span style="font-size:110%">Variable Aleatoria (Xi)</span></br></pre></pre></th>
+                        <th width="300"><pre><span style="font-size:110%">Variable Aleatoria (yi)</span></br></pre></pre></th>
+                        <th width="300"><pre><span style="font-size:110%">Elementos (ni)</span></br></pre></pre></th>	
+                    </tr>
+                    <tr>
+                        <td>
+                            <table border="1" align="center" cellspacing="0" cellpadding="5"  width="300"  height="20">
+                                <tr>
+                                <td> Representa:</td>
+                                <td><strong> {self.__repr_xi__}</strong></td>
+                                </tr>
+                                <tr>
+                                <td> Columna Xi:</td>
+                                <td><strong> {self.__nombre_columna_xi__}</strong></td>
+                                </tr>
+                            </table>
+                        </td>
+                        <td>
+                            <table border="1" align="center" cellspacing="0" cellpadding="5"  width="300"  height="20">
+                                <tr>
+                                <td> Representa:</td>
+                                <td><strong> {self.__repr_yi__}</strong></td>
+                                </tr>
+                                <tr>
+                                <td> Columna yi:</td>
+                                <td><strong> {self.__nombre_columna_yi__}</strong></td>
+                                </tr>
+                            </table>
+                        </td>                            
+                        <td>
+                            <table border="1" align="center" cellspacing="0" cellpadding="5"  width="300"  height="20">
+                            <tr>
+                                <td>Representa:</td>
+                                <td><strong> {self.__repr_fa__}</strong></td>
+                                </tr>
+                            </table>
+                        </td>	
+                    </tr>
+                    <tr>
+                    </table>
+            </body>
+            {self.tabla_estadistica._repr_html_()}
+            '''
+
+        else:
+            return f'''
+            <body>
+                <h1>
+                   {self.__titulo__}
+                </h1>
+
+                <p align="left">
+                    <pre><strong><span style="font-size:110%">{'Datos Agrupados' if self.__agrupados__ ==True else 'Datos No Agrupados'}</span></strong></br></pre>
+                    <pre>Total n: <strong><span style="font-size:110%">{self.__total_n__}</span></strong> {self.__repr_fa__}</br></pre>
+                </p>
+
+                <table border="1" align="center" cellspacing="0" cellpadding="5">
+                    <tr valign="bottom" align="center">
+                        <th width="300"><pre><span style="font-size:110%">Variable Aleatoria (Xi)</span></br></pre></pre></th>
+                        <th width="300"><pre><span style="font-size:110%">Variable Aleatoria (yi)</span></br></pre></pre></th>
+                        <th width="300"><pre><span style="font-size:110%">Elementos (Fa/ni)</span></br></pre></pre></th>	
+                    </tr>
+                    <tr>
+                        <td>
+                            <table border="1" align="center" cellspacing="0" cellpadding="5"  width="300"  height="20">
+                                <tr>
+                                <td> Representa:</td>
+                                <td><strong> {self.__repr_xi__}</strong></td>
+                                </tr>
+                                <tr>
+                                <td> Columna Xi:</td>
+                                <td><strong> {self.__nombre_columna_xi__}</strong></td>
+                                </tr>
+                            </table>
+                        </td>
+                        <td>
+                            <table border="1" align="center" cellspacing="0" cellpadding="5"  width="300"  height="20">
+                                <tr>
+                                <td> Representa:</td>
+                                <td><strong> {self.__repr_yi__}</strong></td>
+                                </tr>
+                                <tr>
+                                <td> Columna Xi:</td>
+                                <td><strong> {self.__nombre_columna_yi__}</strong></td>
+                                </tr>
+                            </table>
+                        </td>                        
+                        <td>
+                            <table border="1" align="center" cellspacing="0" cellpadding="5"  width="300"  height="20">
+                            <tr>
+                                <td> Representa:</td>
+                                <td><strong> {self.__repr_fa__}</strong></td>
+                                </tr>
+                                <tr>
+                                <td> Columna Fa:</td>
+                                <td><strong> {self.__nombre_columna_fa__}</strong></td>
+                                </tr>
+                            </table>
+                        </td>	
+                    </tr>
+                    <tr>
+                    </table>
+            </body>
+            {self.tabla_estadistica._repr_html_()}'''
+
+
     def __display_info_analisis_univariada__(self, dict_info):
 
         titulo =            self.__titulo__
@@ -310,6 +434,57 @@ class Display:
             <pre>pearson:           <strong><span style="font-size:90%">{pearson} ({interpretacion_pearson})</span></strong></br></pre>
             <pre>bowley:            <strong><span style="font-size:90%">{bowley} ({interpretacion_bowley})</span></strong></br></pre>
             <pre>fisher:            <strong><span style="font-size:90%">{fisher} ({interpretacion_fisher})</span></strong></br></pre>
+            '''))
+
+
+    def __display_info_analisis_bivariada__(self, dict_info):
+        '''Aun no se ha hecho correctamente esta formula'''
+
+        titulo =            self.__titulo__
+        agrupados =         self.__agrupados__
+        muestra =           self.__muestra__
+
+        total_n =           dict_info['n']
+        media_xi =          round(dict_info['media_xi'], 4)
+        media_yi =          round(dict_info['media_yi'], 4)
+
+        varianza_xi =       round(dict_info['varianza_xi'], 4)
+        varianza_yi =       round(dict_info['varianza_yi'], 4)
+        stdev_xi =          round(dict_info['stdev_xi'], 4)
+        stdev_yi =          round(dict_info['stdev_yi'], 4)
+        covarianza =        round(dict_info['covarianza'], 4)
+        correlacion =       round(dict_info['correlacion'], 4)
+
+
+
+        interpretacion_covarianza =    self.__interpretaciones_para_info__(covarianza, 'covarianza')
+        
+        interpretacion_correlacion =     self.__interpretaciones_para_info__(correlacion, 'correlacion')
+        
+
+        display(HTML(f'''
+            <h1>
+                {titulo}
+            </h1>
+            <p align="left">
+            <pre><strong><span style="font-size:120%">{'Datos Agrupados' if agrupados == True else 'Datos no Agrupados'}</span></strong></br></pre>
+            <pre><strong><span style="font-size:120%">{'Muestra' if muestra == True else 'Poblacion'}</span></strong></br></pre>
+            <pre>Total n : <strong><span style="font-size:90%">{total_n} {self.__repr_fa__}</span></strong></br></pre>
+            </br>
+            <pre><strong><span style="font-size:120%">Variable Aleatoria "Xi": ({self.__repr_xi__})</span></strong></br></pre>
+            <pre>media Xi:                        <strong><span style="font-size:90%">{media_xi}</span></strong></br></pre>
+            <pre>varianza Xi:                     <strong><span style="font-size:90%">{varianza_xi}</span></strong></br></pre>
+            <pre>desviacion tipica Xi:            <strong><span style="font-size:90%">{stdev_xi}</span></strong></br></pre>
+            </br>
+            </br>
+            <pre><strong><span style="font-size:120%">Variable Aleatoria "Yi": ({self.__repr_yi__})</span></strong></br></pre>
+            <pre>media Yi:                        <strong><span style="font-size:90%">{media_yi}</span></strong></br></pre>
+            <pre>varianza Yi:                     <strong><span style="font-size:90%">{varianza_yi}</span></strong></br></pre>
+            <pre>desviacion tipica Yi:            <strong><span style="font-size:90%">{stdev_yi}</span></strong></br></pre>
+            </br>
+            <pre><strong><span style="font-size:120%">Relacion entre Variables:</span></strong></br></pre>
+            <pre>covarianza:           <strong><span style="font-size:90%">{covarianza} ({interpretacion_covarianza})</span></strong></br></pre>
+            <pre>correlacion:          <strong><span style="font-size:90%">{correlacion} ({interpretacion_correlacion})</span></strong></br></pre>
             '''))
 
 
@@ -1105,6 +1280,31 @@ class Analisis(Backup, Display):
             else:
                 interpretacion = 'Heterogeneo'
         
+        if operacion == 'covarianza':
+            if resultado > 0:
+                interpretacion = 'Relacion Positiva (Directa)'
+
+            elif resultado < 0:
+                interpretacion = 'Relacion Negativa (Inversa)'
+
+            else:
+                interpretacion = 'No hay relacion'
+
+
+        if operacion == 'correlacion':
+            if resultado >= .35:
+                interpretacion = 'Relacion Positiva (Directa)'
+
+            elif resultado <= -.35:
+                interpretacion = 'Relacion Negativa (Inversa)'
+
+            elif resultado > 1 or resultado < -1:
+                interpretacion = 'Relacion erronea, deberian ser valores entre -1 y 1'
+
+            else:
+                interpretacion = 'No existe Relacion Lineal, pudiera existir otro tipo de relacion, ejemplo: cuadratica'            
+
+
         return interpretacion
 
     @property
@@ -2091,6 +2291,7 @@ class AnalisisBivariada(Analisis, TablaPivote):
         covarianza = (suma_xiyi / n) - (media_xi * media_yi)
 
         return covarianza
+    
     @property
     def correlacion(self):
         
@@ -2102,128 +2303,33 @@ class AnalisisBivariada(Analisis, TablaPivote):
 
         return correlacion
 
+    @property
+    def info(self):
+        
+        total_n =           self.__total_n__
+        media_xi =          self.media[0]
+        media_yi =          self.media[1]
+        varianza_xi =       self.varianza[0]
+        varianza_yi =       self.varianza[1]
+        stdev_xi =          self.desviacion_estandar[0]
+        stdev_yi =          self.desviacion_estandar[1]
+        covarianza =        self.covarianza
+        correlacion =       self.correlacion
+
+
+        dict_info = {
+            'n': total_n, 'media_xi': media_xi, 'media_yi': media_yi, 'varianza_xi': varianza_xi, 'varianza_yi': varianza_yi, 'stdev_xi': stdev_xi, 'stdev_yi': stdev_yi,
+            'covarianza': covarianza, 'correlacion': correlacion}
+
+        self.__display_info_analisis_bivariada__(dict_info=dict_info)
+
+
+        return dict_info        
 
     def _repr_html_(self):
 
-        if self.__agrupados__ == False:
-            return f'''
-            <body>
-                <h1>
-                    {self.__titulo__}
-                </h1>
-
-                <p align="left">
-                    <pre><strong><span style="font-size:110%">{'Datos Agrupados' if self.__agrupados__ ==True else 'Datos No Agrupados'}</span></strong></br></pre>
-                    <pre><strong><span style="font-size:110%">{'Muestra' if self.__muestra__ ==True else 'Poblacion'}</span></strong></br></pre>
-                    <pre>Total n: <strong><span style="font-size:110%">{self.__total_n__}</span></strong> {self.__repr_fa__}</br></pre>
-                </p>
-
-                <table border="1" align="center" cellspacing="0" cellpadding="5">
-                    <tr valign="bottom" align="center">
-                        <th width="300"><pre><span style="font-size:110%">Variable Aleatoria (Xi)</span></br></pre></pre></th>
-                        <th width="300"><pre><span style="font-size:110%">Variable Aleatoria (yi)</span></br></pre></pre></th>
-                        <th width="300"><pre><span style="font-size:110%">Elementos (ni)</span></br></pre></pre></th>	
-                    </tr>
-                    <tr>
-                        <td>
-                            <table border="1" align="center" cellspacing="0" cellpadding="5"  width="300"  height="20">
-                                <tr>
-                                <td> Representa:</td>
-                                <td><strong> {self.__repr_xi__}</strong></td>
-                                </tr>
-                                <tr>
-                                <td> Columna Xi:</td>
-                                <td><strong> {self.__nombre_columna_xi__}</strong></td>
-                                </tr>
-                            </table>
-                        </td>
-                        <td>
-                            <table border="1" align="center" cellspacing="0" cellpadding="5"  width="300"  height="20">
-                                <tr>
-                                <td> Representa:</td>
-                                <td><strong> {self.__repr_yi__}</strong></td>
-                                </tr>
-                                <tr>
-                                <td> Columna yi:</td>
-                                <td><strong> {self.__nombre_columna_yi__}</strong></td>
-                                </tr>
-                            </table>
-                        </td>                            
-                        <td>
-                            <table border="1" align="center" cellspacing="0" cellpadding="5"  width="300"  height="20">
-                            <tr>
-                                <td>Representa:</td>
-                                <td><strong> {self.__repr_fa__}</strong></td>
-                                </tr>
-                            </table>
-                        </td>	
-                    </tr>
-                    <tr>
-                    </table>
-            </body>
-            {self.tabla_estadistica._repr_html_()}
-            '''
-
-        else:
-            return f'''
-            <body>
-                <h1>
-                   {self.__titulo__}
-                </h1>
-
-                <p align="left">
-                    <pre><strong><span style="font-size:110%">{'Datos Agrupados' if self.__agrupados__ ==True else 'Datos No Agrupados'}</span></strong></br></pre>
-                    <pre>Total n: <strong><span style="font-size:110%">{self.__total_n__}</span></strong> {self.__repr_fa__}</br></pre>
-                </p>
-
-                <table border="1" align="center" cellspacing="0" cellpadding="5">
-                    <tr valign="bottom" align="center">
-                        <th width="300"><pre><span style="font-size:110%">Variable Aleatoria (Xi)</span></br></pre></pre></th>
-                        <th width="300"><pre><span style="font-size:110%">Variable Aleatoria (yi)</span></br></pre></pre></th>
-                        <th width="300"><pre><span style="font-size:110%">Elementos (Fa/ni)</span></br></pre></pre></th>	
-                    </tr>
-                    <tr>
-                        <td>
-                            <table border="1" align="center" cellspacing="0" cellpadding="5"  width="300"  height="20">
-                                <tr>
-                                <td> Representa:</td>
-                                <td><strong> {self.__repr_xi__}</strong></td>
-                                </tr>
-                                <tr>
-                                <td> Columna Xi:</td>
-                                <td><strong> {self.__nombre_columna_xi__}</strong></td>
-                                </tr>
-                            </table>
-                        </td>
-                        <td>
-                            <table border="1" align="center" cellspacing="0" cellpadding="5"  width="300"  height="20">
-                                <tr>
-                                <td> Representa:</td>
-                                <td><strong> {self.__repr_yi__}</strong></td>
-                                </tr>
-                                <tr>
-                                <td> Columna Xi:</td>
-                                <td><strong> {self.__nombre_columna_yi__}</strong></td>
-                                </tr>
-                            </table>
-                        </td>                        
-                        <td>
-                            <table border="1" align="center" cellspacing="0" cellpadding="5"  width="300"  height="20">
-                            <tr>
-                                <td> Representa:</td>
-                                <td><strong> {self.__repr_fa__}</strong></td>
-                                </tr>
-                                <tr>
-                                <td> Columna Fa:</td>
-                                <td><strong> {self.__nombre_columna_fa__}</strong></td>
-                                </tr>
-                            </table>
-                        </td>	
-                    </tr>
-                    <tr>
-                    </table>
-            </body>
-            {self.tabla_estadistica._repr_html_()}'''    
+        display = self.__repr_analisis_bivariada__()
+        return display    
 
 
 
