@@ -454,12 +454,15 @@ class Display:
         stdev_yi =          round(dict_info['stdev_yi'], 4)
         covarianza =        round(dict_info['covarianza'], 4)
         correlacion =       round(dict_info['correlacion'], 4)
+        determinacion =     round(dict_info['determinacion'], 4)
 
 
 
         interpretacion_covarianza =    self.__interpretaciones_para_info__(covarianza, 'covarianza')
         
         interpretacion_correlacion =     self.__interpretaciones_para_info__(correlacion, 'correlacion')
+
+        interpretacion_determinacion =     self.__interpretaciones_para_info__(determinacion, 'determinacion')
         
 
         display(HTML(f'''
@@ -485,6 +488,7 @@ class Display:
             <pre><strong><span style="font-size:120%">Relacion entre Variables:</span></strong></br></pre>
             <pre>covarianza:           <strong><span style="font-size:90%">{covarianza} ({interpretacion_covarianza})</span></strong></br></pre>
             <pre>correlacion:          <strong><span style="font-size:90%">{correlacion} ({interpretacion_correlacion})</span></strong></br></pre>
+            <pre>determinacion:        <strong><span style="font-size:90%">{determinacion} ({interpretacion_determinacion})</span></strong></br></pre>
             '''))
 
 
@@ -1290,20 +1294,43 @@ class Analisis(Backup, Display):
             else:
                 interpretacion = 'No hay relacion'
 
-
         if operacion == 'correlacion':
-            if resultado >= .35:
-                interpretacion = 'Relacion Positiva (Directa)'
+            
+            if resultado >= 0.9 and resultado <= 1:
+                interpretacion = 'Correlacion Positiva/Directa Perfecta'
+            
+            elif resultado >= 0.5 and resultado < 0.9:
+                interpretacion = 'Correlacion Positiva/Directa Alta'
+            
+            elif resultado > 0 and resultado < 0.5:
+                interpretacion = 'Correlacion Positiva/Directa Baja'
+            
+            elif resultado == 0:
+                interpretacion = 'No existe Relacion Lineal, pudiera existir otro tipo de relacion, ejemplo: cuadratica' 
+            
+            elif resultado < 0 and resultado > -0.5:
+                interpretacion = 'Correlacion Negativa/Inversa Baja'   
 
-            elif resultado <= -.35:
-                interpretacion = 'Relacion Negativa (Inversa)'
+            elif resultado <= -0.5 and resultado > -0.9:
+                interptetacion = 'Correlacion Negativa/Inversa Alta'
 
-            elif resultado > 1 or resultado < -1:
-                interpretacion = 'Relacion erronea, deberian ser valores entre -1 y 1'
+            elif resultado <= -0.9 and resultado >= -1:
+                interpretacion = 'Correlacion Negativa/Inversa Perfecta'
 
             else:
-                interpretacion = 'No existe Relacion Lineal, pudiera existir otro tipo de relacion, ejemplo: cuadratica'            
+                interpretacion = 'Correlacion erronea, solo pueden ser valores entre 1 y -1'
 
+        if operacion == 'determinacion':
+            if resultado >= 0.8:
+                interpretacion = 'El modelo es muy representativo de la realidad'
+            elif resultado >= 0.5 and resultado < 0.8:
+                interpretacion = 'El modelo es medianamente representativo de la realidad'
+            elif resultado >= 0.3 and resultado < 0.5:
+                interpretacion = 'El modelo es bajamente representativo de la realidad'
+            elif resultado >= 0 and resultado < 0.3:
+                interpretacion = 'El modelo no es representativo de la realidad'
+            else:
+                interpretacion = 'Determinacion erronea, el resultado debe ser entre 0 y 1'
 
         return interpretacion
 
@@ -1954,6 +1981,7 @@ class AnalisisUnivariada(Analisis):
 
         return dict_info
 
+
     def cuantiles(self, n=4, method='exclusive'):
         ''' Calculo de cuantiles para datos agrupados y no agrupados.'''
         
@@ -2247,23 +2275,6 @@ class AnalisisBivariada(Analisis, TablaPivote):
 
         self.__creacion_columnas_estadisticas__()
 
-        
-    def tabla_pivote(self, index, totales=False, tipo=None):
-        
-        try:
-            self.__regresar_backup__()
-        
-        except:
-            self.__crear_backup__()
-
-        tabla_pivote = self.datos.__crear_tabla_pivote__(index= index, tipo= tipo , totales= totales)
-
-        self.__agrupados__ = True
-
-        self.tabla_estadistica = tabla_pivote
-
-        
-        return self
 
     @property
     def covarianza(self):
@@ -2304,6 +2315,14 @@ class AnalisisBivariada(Analisis, TablaPivote):
         return correlacion
 
     @property
+    def determinacion(self):
+        correlacion = self.correlacion
+
+        determinacion = correlacion **2
+
+        return determinacion
+
+    @property
     def info(self):
         
         total_n =           self.__total_n__
@@ -2315,16 +2334,57 @@ class AnalisisBivariada(Analisis, TablaPivote):
         stdev_yi =          self.desviacion_estandar[1]
         covarianza =        self.covarianza
         correlacion =       self.correlacion
+        determinacion =     self.determinacion
 
 
         dict_info = {
             'n': total_n, 'media_xi': media_xi, 'media_yi': media_yi, 'varianza_xi': varianza_xi, 'varianza_yi': varianza_yi, 'stdev_xi': stdev_xi, 'stdev_yi': stdev_yi,
-            'covarianza': covarianza, 'correlacion': correlacion}
+            'covarianza': covarianza, 'correlacion': correlacion, 'determinacion': determinacion}
 
         self.__display_info_analisis_bivariada__(dict_info=dict_info)
 
 
         return dict_info        
+
+
+    def tabla_pivote(self, index, totales=False, tipo=None):
+        
+        try:
+            self.__regresar_backup__()
+        
+        except:
+            self.__crear_backup__()
+
+        tabla_pivote = self.datos.__crear_tabla_pivote__(index= index, tipo= tipo , totales= totales)
+
+        self.__agrupados__ = True
+
+        self.tabla_estadistica = tabla_pivote
+
+        
+        return self
+
+    def regresion_lineal_y(self, x):
+        media_xi =      self.media[0]
+        media_yi =      self.media[1]
+        varianza_x =    self.varianza[0]
+        covarianza =    self.covarianza
+
+
+        y = ((covarianza/varianza_x) * x) -((covarianza/varianza_x) * media_xi) + media_yi
+
+        return y
+    
+    def regresion_lineal_x(self, y):
+        media_xi =      self.media[0]
+        media_yi =      self.media[1]
+        varianza_y =    self.varianza[1]
+        covarianza =    self.covarianza
+
+
+        x = ((covarianza/varianza_y) * y) -((covarianza/varianza_y) * media_yi) + media_xi
+
+        return x
 
     def _repr_html_(self):
 
