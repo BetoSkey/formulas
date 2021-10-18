@@ -910,6 +910,60 @@ class Diagrama_caja_bigotes:
     Datos atipicos: {self.datos_atipicos}
             '''
 
+def regresion_lineal_y(x, media_xi, media_yi, covarianza=None, varianza_x=None, n=None, coeficiente_variacion_x=None, coeficiente_variacion_y=None, coeficiente_correlacion=None):
+    '''
+    Recta de regresion de Y sobre X:    
+        Se utiliza para estimar los valores de la Y (dependiente /eje vertical) 
+        a partir de los de la X (independiente /eje horizontal). La pendiente de 
+        la recta es el cociente entre la covarianza y la varianza de la variable X
+
+    covarianza.-    La covarianza de una variable bidimensional (x, y) es el promedio 
+                    de la multiplicacion de las desviaciones de cada una de las variables
+                    respecto a sus promedios respectivos; mide la relacion entre las 
+                    variables pero presenta como inconveniente el hecho de que su valor 
+                    depende de la escala, si son diferentes, entonces puede fallar.
+
+    coeficiente_variacion:  Expresa el porcentaje de variacion de las desviaciones con 
+                            respecto a la media.
+
+    coeficiente_correlacion:    La correlacion es igual a la covarianza pero no presenta el 
+                                inconveniente de las escalas ya que es relativo osea en 
+                                porcentaje.
+
+                                - Si el coeficiente toma valores cercanos a -1 por cada 
+                                    aumento de "x", "y" disminuye.
+                                - Si el coeficiente toma valores cercanos a 1 por cada 
+                                    aumento de "x", "y" aumenta.
+                                - Si el coeficiente toma valores cercanos a 0, por cada 
+                                    aumento de "x", "y" no aumenta ni disminuye.
+
+    '''
+    try:
+        if varianza_x != None:
+            y = ((covarianza/varianza_x) * x) -((covarianza/varianza_x) * media_xi) + media_yi
+
+        else:
+        
+            desviacion_estandar_y = media_yi * coeficiente_variacion_y
+            desviacion_estandar_x = media_xi * coeficiente_variacion_x
+            pendiente_1 = coeficiente_correlacion * (desviacion_estandar_y/desviacion_estandar_x)
+            pendiente_0 = media_yi - (pendiente_1 * media_xi)
+
+            y = pendiente_0 + (pendiente_1 * x)
+            
+    except:
+        
+        raise ValueError('No fue posible calcularlo, revisa si no hizo falta algun parametro')
+
+    return y
+
+def coeficiente_determinacion(coeficiente_correlacion):
+    '''
+    Es el porcentaje de confianza del modelo lineal conforme a la realidad, mientras mas se acerque a 1 es mas confiable.
+    '''
+    determinacion = coeficiente_correlacion ** 2
+
+    return determinacion
 
 # FORMULAS ESTADISTICA DESCRIPTIVA BIVARIADA
 
@@ -1005,7 +1059,7 @@ def valores_z(datos, valor_a_convertir=None, media_lista=None, sigma=None):
 
 def probabilidades_z_distribucion_normal_estandar():
     '''Regresa las probabilidades de z en la distribucion normal estandar'''
-    df = pandas.read_csv('fdp.csv')
+    df = pandas.read_csv('../cursos/Estadistica Computacional con Python/Formulas Estadisticas/fdp.csv')
     z = df['z']
     probabilidad = df['prob']
     probabilidades_z = dict(

@@ -12,6 +12,7 @@ import unittest
 class Backup:
     def __crear_backup__(self):
 
+        # Si es Bivariada
         if type(self) == DatosBivariada or type(self) == AnalisisBivariada:
 
             self.__yi_en_columnas_backup__ = copy.copy(self.__yi_en_columnas__)
@@ -19,12 +20,18 @@ class Backup:
             self.__nombre_columna_yi_backup__ = copy.copy(self.__nombre_columna_yi__)
             self.__yi_name_backup__ = copy.copy(self.__yi__.name)
             self.__yi_backup__ = copy.copy(self.__yi__)
+            self.__du_xi_backup__ = copy.copy(self.__du_xi__)
+            self.__du_yi_backup__ = copy.copy(self.__du_yi__)
 
+            # Solo si es DatosBivariada
             if type(self) == DatosBivariada:
                 self.__datos_backup__ = copy.copy(self.datos)
+            
+            # Solo si es AnalisisBivariada
             else:
                 self.__datos_backup__ = copy.copy(self.datos.datos)
 
+        # Si es Univariada y Bivariada
         self.__columna_xi_backup__ = copy.copy(self.__columna_xi__)
         self.__nombre_columna_xi_backup__ = copy.copy(self.__nombre_columna_xi__)
         self.__xi_name_backup__ = copy.copy(self.__xi__.name)
@@ -37,6 +44,7 @@ class Backup:
 
     def __regresar_backup__(self):
 
+        # Si es Bivariada
         if type(self) == DatosBivariada or type(self) == AnalisisBivariada:
             
             self.__yi_en_columnas__ = self.__yi_en_columnas_backup__
@@ -44,13 +52,19 @@ class Backup:
             self.__nombre_columna_yi__ = self.__nombre_columna_yi_backup__
             self.__yi__.name = self.__yi_name_backup__
             self.__yi__ = self.__yi_backup__
+            self.__du_xi__ = self.__du_xi_backup__
+            self.__du_yi__ = self.__du_yi_backup__
 
+            # Solo si es DatosBivariada
             if type(self) == DatosBivariada:
                 self.datos = self.__datos_backup__
+            
+            # Solo si es AnalisisBivariada
             else:
                 self.datos.datos = self.__datos_backup__
                 self.tabla_estadistica = self.__datos_backup__
 
+        # Si es Univariada y Bivariada
         self.__columna_xi__ = self.__columna_xi_backup__
         self.__nombre_columna_xi__ = self.__nombre_columna_xi_backup__
         self.__xi__.name = self.__xi_name_backup__
@@ -97,9 +111,6 @@ class TablaPivote:
         
         # columnas == None es para la formula DatosBivariados.agrupar()
         if columnas == None:
-            '''tabla_pivote = self.datos.pivot_table(
-                index=index, columns=columnas, aggfunc= lambda x: len(x)/len(self.datos), 
-                fill_value=fill_value).reset_index().rename({0:'ni'}, axis=1)'''
 
             tabla_pivote = self.datos.pivot_table(
                 index=index, columns=columnas, aggfunc= lambda x: len(x), 
@@ -109,53 +120,69 @@ class TablaPivote:
         # columnas != None
         else:
             
+            # tipo: None
             if tipo == None:
+                # sin totales
                 if totales == False:
                     tabla_pivote = self.datos.pivot_table(
                         index= index, columns= columnas, aggfunc= len, fill_value=fill_value)
+                # con totales
                 else:
                     tabla_pivote = self.datos.pivot_table(
                         index= index, columns= columnas, aggfunc= len, margins=True, margins_name='Total', 
                         fill_value=fill_value)
             
+            # tipo: relativa
             elif tipo == 'relativa':
+                # sin totales
                 if totales == False:
                     tabla_pivote = self.datos.pivot_table(
                         index= index, columns= columnas, aggfunc= lambda x: len(x)/len(self.datos), 
                         fill_value=fill_value)
+                # con totales
                 else:
                     tabla_pivote = self.datos.pivot_table(
                         index= index, columns= columnas, aggfunc= lambda x: len(x)/len(self.datos), 
                         margins=True, margins_name='Total', fill_value=fill_value)
 
+            # tipo: marginal
             elif tipo == 'marginal':
+                # sin totales
                 if totales == False:
                     tabla_pivote = self.datos.pivot_table(
                         index= index, columns= columnas, aggfunc= lambda x: len(x)/len(self.datos), 
                         fill_value=fill_value)
+                # con totales
                 else:
                     tabla_pivote = self.datos.pivot_table(
                         index= index, columns= columnas, aggfunc= lambda x: len(x)/len(self.datos), 
                         margins=True, margins_name='Total', fill_value=fill_value)
-                
+            
+            # tipo: marginal en index
             elif tipo == 'marginal_index':
+                # sin totales
                 if totales == False:
                     tabla_pivote = pandas.crosstab(
                         index=self.datos[index], columns=self.datos[columnas], normalize='index')
+                # con totales
                 else:
                     tabla_pivote = pandas.crosstab(
                         index=self.datos[index], columns=self.datos[columnas], normalize='index', 
                         margins=True, margins_name='Total')
 
+            # tipo: marginal en columnas
             elif tipo == 'marginal_columns':
+                # sin totales
                 if totales == False:
                     tabla_pivote = pandas.crosstab(
                         index=self.datos[index], columns=self.datos[columnas], normalize='columns')
+                # con totales
                 else:
                     tabla_pivote = pandas.crosstab(
                         index=self.datos[index], columns=self.datos[columnas], normalize='columns', 
                         margins=True, margins_name='Total')
 
+            # tipo: no reconocido
             else:
                 raise ValueError('"tipo" no reconocido')
 
@@ -529,10 +556,15 @@ class DatosEstadisticos(Backup, Display):
 
             self.datos.reset_index(drop=True, inplace=True)
 
-            self.__agrupados__ = True
+            #self.__agrupados__ = True
             self.__yi_en_columnas__ = False
             self.__columna_fa__ = self.__repr_fa__
 
+            mask = self.datos.index.repeat(self.datos[self.__repr_fa__])
+            self.datos = self.datos.loc[mask].drop(self.__repr_fa__, axis = 1)
+            self.datos.reset_index(drop=True, inplace=True)
+            self.__agrupados__ = False
+            self.__columna_fa__ = 0
 
     def __quitar_indices__(self):
 
@@ -547,9 +579,10 @@ class DatosEstadisticos(Backup, Display):
                 self.__obtener_nombre_columnas__()
                 
                 self.__melt_datos__()
+                
+
         else:
             raise ValueError('type no reconocido')
-
 
     def __dar_formato_datos__(self):
         
@@ -669,6 +702,14 @@ class DatosEstadisticos(Backup, Display):
                 total_n = self.__fa__.sum()
 
             return total_n
+
+    def __crear_DatosUnivariada_variables__(self):
+        self.__du_xi__ = DatosUnivariada(datos=self.__xi__, titulo=self.__titulo__, repr_xi=self.__repr_xi__, repr_fa=self.__repr_fa__)
+        self.__du_yi__ = DatosUnivariada(datos=self.__yi__, titulo=self.__titulo__, repr_xi=self.__repr_yi__, repr_fa=self.__repr_fa__)
+        self.__du_xi__.agrupar()
+        self.__du_yi__.agrupar()
+        self.__du_xi__.datos.reset_index(inplace=True)
+        self.__du_yi__.datos.reset_index(inplace=True)
 
 class DatosUnivariada(DatosEstadisticos):
 
@@ -928,6 +969,8 @@ class DatosBivariada(DatosEstadisticos, TablaPivote):
 
         self.__total_n__ = self.__total_n__()
 
+        self.__crear_DatosUnivariada_variables__()
+
     def agrupar(self):
         index = None
         totales = False
@@ -1097,7 +1140,9 @@ class Analisis(Backup, Display):
             self.__columna_yi_backup__ = datos.__columna_yi_backup__
             self.__nombre_columna_yi_backup__ = datos.__nombre_columna_yi_backup__
             self.__yi_name_backup__ = datos.__yi_name_backup__
-            self.__yi_backup__ = datos.__yi_backup__        
+            self.__yi_backup__ = datos.__yi_backup__
+            self.__du_xi_backup__ = datos.__du_xi_backup__
+            self.__du_yi_backup__ = datos.__du_yi_backup__
 
     def __copiar_parametros__(self,datos):
             
@@ -1132,7 +1177,9 @@ class Analisis(Backup, Display):
                 self.__repr_yi__ = datos.__repr_yi__
                 self.__columna_yi__ = datos.__columna_yi__
                 self.__nombre_columna_yi__ = datos.__nombre_columna_yi__
-                self.__yi__ = datos.__yi__      
+                self.__yi__ = datos.__yi__
+                self.__du_xi__ = datos.__du_xi__
+                self.__du_yi__ = datos.__du_yi__
 
             else:
                 raise ValueError('Type no reconocido')      
@@ -1252,6 +1299,10 @@ class Analisis(Backup, Display):
         else:
             raise ValueError('El type recibido no es DatosUnivariada ni DatosBivariada, revisar')
 
+    def __analisis_univariada_variables__(self):
+        self.analisis_xi = AnalisisUnivariada(self.__du_xi__)
+        self.analisis_yi = AnalisisUnivariada(self.__du_yi__) 
+
     def __interpretaciones_para_info__(self, resultado, operacion):
         
         if operacion == 'pearson':
@@ -1336,25 +1387,37 @@ class Analisis(Backup, Display):
 
     @property
     def media(self):
-        try: 
+        #try: 
             xi = self.__xi__
             ni = self.__fa__        
             total_n = self.__total_n__
-
+            
             if self.__agrupados__ == False:
-
+                
                 media_xi = xi.mean()
 
             else:
                 
                 #Si los datos estan agrupados por rangos
                 if type(self) == AnalisisUnivariada:
-                    if self.__mc__ is not None:
+                    if self.__es_cualitativa__() == False:
+                        if self.__mc__ is not None:
+                            xi = self.__mc__
+                
+                        sumatoria_ni_xi = (ni * xi).sum()
+                        
+                        media_xi = sumatoria_ni_xi / total_n
+                    
+                    else:
+                        media_xi = ni.sum() / total_n
+                    
+                    '''if self.__mc__ is not None:
                         xi = self.__mc__
-
-                sumatoria_ni_xi = (ni * xi).sum()
-
-                media_xi = sumatoria_ni_xi / total_n
+            
+                    sumatoria_ni_xi = (ni * xi).sum()
+                    
+                    media_xi = sumatoria_ni_xi / total_n'''
+                    
                 
             if type(self) == AnalisisUnivariada:
                 return media_xi
@@ -1373,9 +1436,9 @@ class Analisis(Backup, Display):
 
                 return media_xi, media_yi
         
-        except:
+        #except:
             
-            raise ValueError('No se puede calcular la media de datos no numericos.')
+            #raise ValueError('No se puede calcular la media de datos no numericos.')
 
     @property
     def varianza(self):
@@ -1594,6 +1657,17 @@ class AnalisisUnivariada(Analisis):
             es_rango = True if (type(xi[0]) is list or type(xi[0]) is tuple) else False
 
         return es_rango
+    
+    def __es_cualitativa__(self):
+        xi = self.__xi__
+        
+        try:
+            es_cualitativa = True if type(xi.iloc[0]) is str else False
+            
+        except:
+            es_cualitativa = True if type(xi[0]) is str  else False
+
+        return es_cualitativa
 
     def __marca_clase__(self, rango):
         '''
@@ -1802,6 +1876,7 @@ class AnalisisUnivariada(Analisis):
         else:
 
             es_rango = self.__es_rango__()
+            
             moda_fa = max(self.__fa__)
 
             mask1 = self.tabla_estadistica[self.__nombre_columna_fa__] == moda_fa
@@ -1825,7 +1900,7 @@ class AnalisisUnivariada(Analisis):
                 # Se obtiene el intevalo modal si esta en las columnas
                 else:
                     intervalo_moda = self.tabla_estadistica[mask1][self.__nombre_columna_xi__][index_moda]
-                
+
                 # Limite inferior y superior del intervalo modal
                 Li = intervalo_moda[0]
                 Ls = intervalo_moda[1]
@@ -2275,6 +2350,7 @@ class AnalisisBivariada(Analisis, TablaPivote):
 
         self.__creacion_columnas_estadisticas__()
 
+        self.__analisis_univariada_variables__()
 
     @property
     def covarianza(self):
@@ -2348,7 +2424,13 @@ class AnalisisBivariada(Analisis, TablaPivote):
 
 
     def tabla_pivote(self, index, totales=False, tipo=None):
-        
+        '''
+        tipo:
+        - None
+        - relativa
+        - marginal_index
+        - marginal_columns
+        '''
         try:
             self.__regresar_backup__()
         
