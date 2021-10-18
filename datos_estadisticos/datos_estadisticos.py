@@ -1212,59 +1212,124 @@ class Analisis(Backup, Display):
 
                         }
 
+    def __es_cualitativa__(self):
+        xi = self.__xi__
+        
+        try:
+            es_cualitativa = True if type(xi.iloc[0]) is str else False
+            
+        except:
+            es_cualitativa = True if type(xi[0]) is str  else False
+
+        return es_cualitativa
+
     def __creacion_columnas_estadisticas__(self):
             
         fa = self.__fa__
         total_n = self.__total_n__
+        cualitativa = self.__es_cualitativa__()
 
         if type(self) == AnalisisUnivariada:
-            self.__mc__ = self.__calculo_marcas_clase__()
+            
+            # Si NO es cualitativa
+            if cualitativa == False:
+                self.__mc__ = self.__calculo_marcas_clase__()
 
-            es_rango =   self.__es_rango__()            
-            media =      self.media
-            xi =         self.tabla_estadistica[self.__nombre_columna_xi__] if es_rango == False else self.tabla_estadistica[self.__nombres_columnas_estadisticas__['mc']]
-            xi2 =        self.tabla_estadistica[self.__nombres_columnas_estadisticas__['xi2']] = xi ** 2
-            xi_menos_media =        self.tabla_estadistica[self.__nombres_columnas_estadisticas__['xi-media']] = xi - media
+                es_rango =   self.__es_rango__()            
+                media =      self.media
+                xi =         self.tabla_estadistica[self.__nombre_columna_xi__] if es_rango == False else self.tabla_estadistica[self.__nombres_columnas_estadisticas__['mc']]
+                xi2 =        self.tabla_estadistica[self.__nombres_columnas_estadisticas__['xi2']] = xi ** 2
+                xi_menos_media =        self.tabla_estadistica[self.__nombres_columnas_estadisticas__['xi-media']] = xi - media
 
-            # Cuando son datos agrupados no existen frecuencias absolutas
-            if self.__agrupados__ == False:
-                faa =     None
-                fr =      None
-                fra =     None
-                nixi =   None   
-                nixi2 =  None
-                xi_menos_media_por_ni_exp_2 = None
-                xi_menos_media_por_ni_exp_3 = None
-                xi_menos_media_por_ni_exp_4 = None
+                # Cuando son datos agrupados no existen frecuencias absolutas
+                if self.__agrupados__ == False:
+                    faa =     None
+                    fr =      None
+                    fra =     None
+                    nixi =   None   
+                    nixi2 =  None
+                    xi_menos_media_por_ni_exp_2 = None
+                    xi_menos_media_por_ni_exp_3 = None
+                    xi_menos_media_por_ni_exp_4 = None
 
-            # Columnas para datos agrupados
+                # Columnas para datos agrupados
+                else:
+                    faa =                   self.tabla_estadistica[self.__nombres_columnas_estadisticas__['faa']] = fa.cumsum()
+                    fr =                    self.tabla_estadistica[self.__nombres_columnas_estadisticas__['fr']] = fa / total_n
+                    fra =                   self.tabla_estadistica[self.__nombres_columnas_estadisticas__['fra']] = fr.cumsum()
+                    nixi =                  self.tabla_estadistica[self.__nombres_columnas_estadisticas__['xi*ni']] = xi * fa
+                    nixi2 =                 self.tabla_estadistica[self.__nombres_columnas_estadisticas__['xi2*ni']] = xi2 * fa
+                    
+
+                    # Dataframe de xi-media y ni para formula .apply
+                    xi_menos_media_ni_df = self.tabla_estadistica[[self.__nombres_columnas_estadisticas__['xi-media'], self.__nombre_columna_fa__]]
+                    
+                    xi_menos_media_por_ni_exp_2 = self.tabla_estadistica[self.__nombres_columnas_estadisticas__['ni*(xi-media)2']] = xi_menos_media_ni_df.apply(self.__xi_menos_media_por_ni_exponencial__, args=[2], axis='columns')
+                    xi_menos_media_por_ni_exp_3 = self.tabla_estadistica[self.__nombres_columnas_estadisticas__['ni*(xi-media)3']] = xi_menos_media_ni_df.apply(self.__xi_menos_media_por_ni_exponencial__, args=[3], axis='columns')
+                    xi_menos_media_por_ni_exp_4 = self.tabla_estadistica[self.__nombres_columnas_estadisticas__['ni*(xi-media)4']] = xi_menos_media_ni_df.apply(self.__xi_menos_media_por_ni_exponencial__, args=[4], axis='columns')
+                
+                
+                self.__faa__ = faa
+                self.__fr__ = fr
+                self.__fra__ = fra
+                self.__xi2__ = xi2
+                self.__nixi__ = nixi
+                self.__nixi2__ = nixi2
+                self.__xi_menos_media__ = xi_menos_media
+                self.__xi_menos_media2_por_ni__ = xi_menos_media_por_ni_exp_2
+                self.__xi_menos_media3_por_ni__ = xi_menos_media_por_ni_exp_3
+                self.__xi_menos_media4_por_ni__ = xi_menos_media_por_ni_exp_4
+
+            # Si ES cualitativa
             else:
-                faa =                   self.tabla_estadistica[self.__nombres_columnas_estadisticas__['faa']] = fa.cumsum()
-                fr =                    self.tabla_estadistica[self.__nombres_columnas_estadisticas__['fr']] = fa / total_n
-                fra =                   self.tabla_estadistica[self.__nombres_columnas_estadisticas__['fra']] = fr.cumsum()
-                nixi =                  self.tabla_estadistica[self.__nombres_columnas_estadisticas__['xi*ni']] = xi * fa
-                nixi2 =                 self.tabla_estadistica[self.__nombres_columnas_estadisticas__['xi2*ni']] = xi2 * fa
-                
+                self.__mc__ = self.__calculo_marcas_clase__()
 
-                # Dataframe de xi-media y ni para formula .apply
-                xi_menos_media_ni_df = self.tabla_estadistica[[self.__nombres_columnas_estadisticas__['xi-media'], self.__nombre_columna_fa__]]
+                es_rango =   self.__es_rango__()            
+                media =      self.media
+                xi =         self.tabla_estadistica[self.__nombre_columna_xi__] if es_rango == False else self.tabla_estadistica[self.__nombres_columnas_estadisticas__['mc']]
+                xi2 =        None
+                xi_menos_media =        None
+
+                # Cuando son datos agrupados no existen frecuencias absolutas
+                if self.__agrupados__ == False:
+                    faa =     None
+                    fr =      None
+                    fra =     None
+                    nixi =   None   
+                    nixi2 =  None
+                    xi_menos_media_por_ni_exp_2 = None
+                    xi_menos_media_por_ni_exp_3 = None
+                    xi_menos_media_por_ni_exp_4 = None
+
+                # Columnas para datos agrupados
+                else:
+                    faa =                   self.tabla_estadistica[self.__nombres_columnas_estadisticas__['faa']] = fa.cumsum()
+                    fr =                    self.tabla_estadistica[self.__nombres_columnas_estadisticas__['fr']] = fa / total_n
+                    fra =                   self.tabla_estadistica[self.__nombres_columnas_estadisticas__['fra']] = fr.cumsum()
+                    nixi =                  None
+                    nixi2 =                 None
+                    
+
+                    # Dataframe de xi-media y ni para formula .apply
+                    xi_menos_media_ni_df = None
+                    
+                    xi_menos_media_por_ni_exp_2 = None
+                    xi_menos_media_por_ni_exp_3 = None
+                    xi_menos_media_por_ni_exp_4 = None
                 
-                xi_menos_media_por_ni_exp_2 = self.tabla_estadistica[self.__nombres_columnas_estadisticas__['ni*(xi-media)2']] = xi_menos_media_ni_df.apply(self.__xi_menos_media_por_ni_exponencial__, args=[2], axis='columns')
-                xi_menos_media_por_ni_exp_3 = self.tabla_estadistica[self.__nombres_columnas_estadisticas__['ni*(xi-media)3']] = xi_menos_media_ni_df.apply(self.__xi_menos_media_por_ni_exponencial__, args=[3], axis='columns')
-                xi_menos_media_por_ni_exp_4 = self.tabla_estadistica[self.__nombres_columnas_estadisticas__['ni*(xi-media)4']] = xi_menos_media_ni_df.apply(self.__xi_menos_media_por_ni_exponencial__, args=[4], axis='columns')
-            
-            
-            self.__faa__ = faa
-            self.__fr__ = fr
-            self.__fra__ = fra
-            self.__xi2__ = xi2
-            self.__nixi__ = nixi
-            self.__nixi2__ = nixi2
-            self.__xi_menos_media__ = xi_menos_media
-            self.__xi_menos_media2_por_ni__ = xi_menos_media_por_ni_exp_2
-            self.__xi_menos_media3_por_ni__ = xi_menos_media_por_ni_exp_3
-            self.__xi_menos_media4_por_ni__ = xi_menos_media_por_ni_exp_4
-        
+                
+                # Se asignan los resultados
+                self.__faa__ = faa
+                self.__fr__ = fr
+                self.__fra__ = fra
+                self.__xi2__ = xi2
+                self.__nixi__ = nixi
+                self.__nixi2__ = nixi2
+                self.__xi_menos_media__ = xi_menos_media
+                self.__xi_menos_media2_por_ni__ = xi_menos_media_por_ni_exp_2
+                self.__xi_menos_media3_por_ni__ = xi_menos_media_por_ni_exp_3
+                self.__xi_menos_media4_por_ni__ = xi_menos_media_por_ni_exp_4                
+
         elif type(self) == AnalisisBivariada:
             xi =         self.tabla_estadistica[self.__nombre_columna_xi__]
             yi =         self.tabla_estadistica[self.__nombre_columna_yi__]
@@ -1532,53 +1597,89 @@ class AnalisisUnivariada(Analisis):
     def __ordenar_columnas__(self):
         agrupados = self.__agrupados__
         es_rango = self.__es_rango__()
+        cualitativa = self.__es_cualitativa__()
 
-        # Datos agrupados
-        if agrupados == True:
+        # Si NO es cualitativa
+        if cualitativa == False:
+            # Datos agrupados
+            if agrupados == True:
 
-            # No es rango
-            if es_rango == True:
-                self.tabla_estadistica = self.tabla_estadistica[[
-                    self.__nombre_columna_xi__, 
-                    self.__nombre_columna_fa__,
-                    self.__nombres_columnas_estadisticas__['faa'],
-                    self.__nombres_columnas_estadisticas__['fr'],
-                    self.__nombres_columnas_estadisticas__['fra'],
-                    self.__nombres_columnas_estadisticas__['mc'],
-                    self.__nombres_columnas_estadisticas__['xi2'],
-                    self.__nombres_columnas_estadisticas__['xi*ni'],
-                    self.__nombres_columnas_estadisticas__['xi2*ni'],
-                    self.__nombres_columnas_estadisticas__['xi-media'],
-                    self.__nombres_columnas_estadisticas__['ni*(xi-media)2'],
-                    self.__nombres_columnas_estadisticas__['ni*(xi-media)3'],
-                    self.__nombres_columnas_estadisticas__['ni*(xi-media)4']
-                ]]
+                # ES rango
+                if es_rango == True:
+                    self.tabla_estadistica = self.tabla_estadistica[[
+                        self.__nombre_columna_xi__, 
+                        self.__nombre_columna_fa__,
+                        self.__nombres_columnas_estadisticas__['faa'],
+                        self.__nombres_columnas_estadisticas__['fr'],
+                        self.__nombres_columnas_estadisticas__['fra'],
+                        self.__nombres_columnas_estadisticas__['mc'],
+                        self.__nombres_columnas_estadisticas__['xi2'],
+                        self.__nombres_columnas_estadisticas__['xi*ni'],
+                        self.__nombres_columnas_estadisticas__['xi2*ni'],
+                        self.__nombres_columnas_estadisticas__['xi-media'],
+                        self.__nombres_columnas_estadisticas__['ni*(xi-media)2'],
+                        self.__nombres_columnas_estadisticas__['ni*(xi-media)3'],
+                        self.__nombres_columnas_estadisticas__['ni*(xi-media)4']
+                    ]]
 
-            # Es rango
+                # NO es rango
+                else:
+                    self.tabla_estadistica = self.tabla_estadistica[[
+                        self.__nombre_columna_xi__, 
+                        self.__nombre_columna_fa__,
+                        self.__nombres_columnas_estadisticas__['faa'],
+                        self.__nombres_columnas_estadisticas__['fr'],
+                        self.__nombres_columnas_estadisticas__['fra'],
+                        self.__nombres_columnas_estadisticas__['xi2'],
+                        self.__nombres_columnas_estadisticas__['xi*ni'],
+                        self.__nombres_columnas_estadisticas__['xi2*ni'],
+                        self.__nombres_columnas_estadisticas__['xi-media'],
+                        self.__nombres_columnas_estadisticas__['ni*(xi-media)2'],
+                        self.__nombres_columnas_estadisticas__['ni*(xi-media)3'],
+                        self.__nombres_columnas_estadisticas__['ni*(xi-media)4']
+                    ]]
+            
+            # Datos no agrupados
             else:
                 self.tabla_estadistica = self.tabla_estadistica[[
-                    self.__nombre_columna_xi__, 
-                    self.__nombre_columna_fa__,
-                    self.__nombres_columnas_estadisticas__['faa'],
-                    self.__nombres_columnas_estadisticas__['fr'],
-                    self.__nombres_columnas_estadisticas__['fra'],
-                    self.__nombres_columnas_estadisticas__['xi2'],
-                    self.__nombres_columnas_estadisticas__['xi*ni'],
-                    self.__nombres_columnas_estadisticas__['xi2*ni'],
-                    self.__nombres_columnas_estadisticas__['xi-media'],
-                    self.__nombres_columnas_estadisticas__['ni*(xi-media)2'],
-                    self.__nombres_columnas_estadisticas__['ni*(xi-media)3'],
-                    self.__nombres_columnas_estadisticas__['ni*(xi-media)4']
-                ]]
+                        self.__nombre_columna_xi__,                    
+                        self.__nombres_columnas_estadisticas__['xi2'],
+                        self.__nombres_columnas_estadisticas__['xi-media'],
+                    ]]
         
-        # Datos no agrupados
+        # Si ES cualitativa
         else:
-            self.tabla_estadistica = self.tabla_estadistica[[
-                    self.__nombre_columna_xi__,                    
-                    self.__nombres_columnas_estadisticas__['xi2'],
-                    self.__nombres_columnas_estadisticas__['xi-media'],
-                ]]
-                
+            # Datos agrupados
+            if agrupados == True:
+
+                # ES rango
+                if es_rango == True:
+                    self.tabla_estadistica = self.tabla_estadistica[[
+                        self.__nombre_columna_xi__, 
+                        self.__nombre_columna_fa__,
+                        self.__nombres_columnas_estadisticas__['faa'],
+                        self.__nombres_columnas_estadisticas__['fr'],
+                        self.__nombres_columnas_estadisticas__['fra'],
+                        self.__nombres_columnas_estadisticas__['mc']
+                    ]]
+
+                # NO es rango
+                else:
+                    self.tabla_estadistica = self.tabla_estadistica[[
+                        self.__nombre_columna_xi__, 
+                        self.__nombre_columna_fa__,
+                        self.__nombres_columnas_estadisticas__['faa'],
+                        self.__nombres_columnas_estadisticas__['fr'],
+                        self.__nombres_columnas_estadisticas__['fra']
+                    ]]
+            
+            # Datos no agrupados
+            else:
+                self.tabla_estadistica = self.tabla_estadistica[[
+                        self.__nombre_columna_xi__
+                    ]]
+
+
     def __creacion_intervalos__(self, rango_intervalos):
         '''
         Crea intervalos de los datos proporcionados de acuerdo al rango requerido para los
@@ -1658,17 +1759,6 @@ class AnalisisUnivariada(Analisis):
 
         return es_rango
     
-    def __es_cualitativa__(self):
-        xi = self.__xi__
-        
-        try:
-            es_cualitativa = True if type(xi.iloc[0]) is str else False
-            
-        except:
-            es_cualitativa = True if type(xi[0]) is str  else False
-
-        return es_cualitativa
-
     def __marca_clase__(self, rango):
         '''
         Funcion:
