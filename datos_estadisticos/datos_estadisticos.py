@@ -1212,7 +1212,7 @@ class Analisis(Backup, Display):
 
                         }
 
-    def __es_cualitativa__(self):
+    def __es_cualitativa_xi__(self):
         xi = self.__xi__
         
         try:
@@ -1222,17 +1222,28 @@ class Analisis(Backup, Display):
             es_cualitativa = True if type(xi[0]) is str  else False
 
         return es_cualitativa
+    
+    def __es_cualitativa_yi__(self):
+        yi = self.__yi__
+        
+        try:
+            es_cualitativa = True if type(yi.iloc[0]) is str else False
+            
+        except:
+            es_cualitativa = True if type(yi[0]) is str  else False
+
+        return es_cualitativa
 
     def __creacion_columnas_estadisticas__(self):
             
         fa = self.__fa__
         total_n = self.__total_n__
-        cualitativa = self.__es_cualitativa__()
+        cualitativa_xi = self.__es_cualitativa_xi__()
 
         if type(self) == AnalisisUnivariada:
             
             # Si NO es cualitativa
-            if cualitativa == False:
+            if cualitativa_xi == False:
                 self.__mc__ = self.__calculo_marcas_clase__()
 
                 es_rango =   self.__es_rango__()            
@@ -1452,7 +1463,9 @@ class Analisis(Backup, Display):
 
     @property
     def media(self):
-        #try: 
+
+        if self.__es_cualitativa_xi__() == False:
+
             xi = self.__xi__
             ni = self.__fa__        
             total_n = self.__total_n__
@@ -1465,54 +1478,51 @@ class Analisis(Backup, Display):
                 
                 #Si los datos estan agrupados por rangos
                 if type(self) == AnalisisUnivariada:
-                    if self.__es_cualitativa__() == False:
-                        if self.__mc__ is not None:
-                            xi = self.__mc__
-                
-                        sumatoria_ni_xi = (ni * xi).sum()
-                        
-                        media_xi = sumatoria_ni_xi / total_n
                     
-                    else:
-                        media_xi = ni.sum() / total_n
-                    
-                    '''if self.__mc__ is not None:
+                    if self.__mc__ is not None:
                         xi = self.__mc__
             
                     sumatoria_ni_xi = (ni * xi).sum()
                     
-                    media_xi = sumatoria_ni_xi / total_n'''
-                    
-                
-            if type(self) == AnalisisUnivariada:
-                return media_xi
+                    media_xi = sumatoria_ni_xi / total_n
+
+        else:
+            media_xi = 'La media de Xi no es medible por ser una variable cualitativa'        
             
-            if type(self) == AnalisisBivariada:
-                yi = self.__yi__
-
-                if self.__agrupados__ == False:
-                    media_yi = yi.mean()
+        if type(self) == AnalisisUnivariada:
+            return media_xi
+        
+        if type(self) == AnalisisBivariada:
+                if self.__es_cualitativa_yi__() == False:
                 
+                    yi = self.__yi__
+
+                    if self.__agrupados__ == False:
+                        media_yi = yi.mean()
+                    
+                    else:
+
+                        sumatoria_ni_yi = (ni* yi).sum()
+
+                        media_yi = sumatoria_ni_yi / total_n
+
                 else:
-
-                    sumatoria_ni_yi = (ni* yi).sum()
-
-                    media_yi = sumatoria_ni_yi / total_n
+                    media_yi = 'La media de Yi no es medible por ser una variable cualitativa'
 
                 return media_xi, media_yi
         
-        #except:
-            
-            #raise ValueError('No se puede calcular la media de datos no numericos.')
 
     @property
     def varianza(self):
+
+        
         muestra = self.__muestra__
         
         xi =            self.tabla_estadistica[self.__nombre_columna_xi__]
         
         n =             self.__total_n__
         media =         self.media
+
 
         if type(self) == AnalisisBivariada:
             media_xi =  media[0]
@@ -1538,20 +1548,23 @@ class Analisis(Backup, Display):
             return varianza_xi, varianza_yi
 
         else:            
+            if self.__es_cualitativa_xi__() == False:
 
-            if self.__agrupados__ == True:
+                if self.__agrupados__ == True:
 
-                
-                nixi2 =     self.tabla_estadistica[self.__nombres_columnas_estadisticas__['xi2*ni']]
-                varianza_xi =  ((nixi2.sum() / n) - (media ** 2))
-                
+                    
+                    nixi2 =     self.tabla_estadistica[self.__nombres_columnas_estadisticas__['xi2*ni']]
+                    varianza_xi =  ((nixi2.sum() / n) - (media ** 2))
+                    
 
-            else:
-                if muestra == True:
-                    varianza_xi = variance(xi)
                 else:
-                    varianza_xi = pvariance(xi)
-        
+                    if muestra == True:
+                        varianza_xi = variance(xi)
+                    else:
+                        varianza_xi = pvariance(xi)
+            
+            else:
+                varianza_xi = 'La varianza de Xi no es medible por ser variable cualitativa'
 
             return varianza_xi
 
@@ -1597,10 +1610,10 @@ class AnalisisUnivariada(Analisis):
     def __ordenar_columnas__(self):
         agrupados = self.__agrupados__
         es_rango = self.__es_rango__()
-        cualitativa = self.__es_cualitativa__()
+        cualitativa_xi = self.__es_cualitativa_xi__()
 
         # Si NO es cualitativa
-        if cualitativa == False:
+        if cualitativa_xi == False:
             # Datos agrupados
             if agrupados == True:
 
@@ -1678,7 +1691,6 @@ class AnalisisUnivariada(Analisis):
                 self.tabla_estadistica = self.tabla_estadistica[[
                         self.__nombre_columna_xi__
                     ]]
-
 
     def __creacion_intervalos__(self, rango_intervalos):
         '''
