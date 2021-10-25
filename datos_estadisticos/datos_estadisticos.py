@@ -472,17 +472,39 @@ class Display:
         muestra =           self.__muestra__
 
         total_n =           dict_info['n']
-        media_xi =          round(dict_info['media_xi'], 4)
-        media_yi =          round(dict_info['media_yi'], 4)
 
-        varianza_xi =       round(dict_info['varianza_xi'], 4)
-        varianza_yi =       round(dict_info['varianza_yi'], 4)
-        stdev_xi =          round(dict_info['stdev_xi'], 4)
-        stdev_yi =          round(dict_info['stdev_yi'], 4)
-        covarianza =        round(dict_info['covarianza'], 4)
-        correlacion =       round(dict_info['correlacion'], 4)
-        determinacion =     round(dict_info['determinacion'], 4)
+        cualitativa_xi =    self.__es_cualitativa_xi__()
+        cualitativa_yi =    self.__es_cualitativa_yi__()
 
+        if cualitativa_xi == False:
+            media_xi =          round(dict_info['media_xi'], 4)
+            varianza_xi =       round(dict_info['varianza_xi'], 4)
+            stdev_xi =          round(dict_info['stdev_xi'], 4)
+        
+        else:
+            media_xi =          dict_info['media_xi']
+            varianza_xi =       dict_info['varianza_xi']
+            stdev_xi =          dict_info['stdev_xi']
+
+        if cualitativa_yi == False:
+            media_yi =          round(dict_info['media_yi'], 4)
+            varianza_yi =       round(dict_info['varianza_yi'], 4)
+            stdev_yi =          round(dict_info['stdev_yi'], 4)
+        
+        else:
+            media_yi =          dict_info['media_yi']
+            varianza_yi =       dict_info['varianza_yi']
+            stdev_yi =          dict_info['stdev_yi']            
+        
+        if cualitativa_xi == True or cualitativa_yi == True:
+            covarianza =        dict_info['covarianza']
+            correlacion =       dict_info['correlacion']
+            determinacion =     dict_info['determinacion']
+
+        else:
+            covarianza =        round(dict_info['covarianza'], 4)
+            correlacion =       round(dict_info['correlacion'], 4)
+            determinacion =     round(dict_info['determinacion'], 4)
 
 
         interpretacion_covarianza =    self.__interpretaciones_para_info__(covarianza, 'covarianza')
@@ -1381,6 +1403,11 @@ class Analisis(Backup, Display):
 
     def __interpretaciones_para_info__(self, resultado, operacion):
         
+        xi_cualitativa = self.__es_cualitativa_xi__()
+        
+        if type(self) == AnalisisBivariada:
+            yi_cualitativa = self.__es_cualitativa_yi__()
+
         if operacion == 'pearson':
             if resultado < 0:
                 interpretacion = 'Asimetrica Negativa'
@@ -1412,73 +1439,80 @@ class Analisis(Backup, Display):
                 interpretacion = 'Heterogeneo'
         
         if operacion == 'covarianza':
-            if resultado > 0:
-                interpretacion = 'Relacion Positiva (Directa)'
-
-            elif resultado < 0:
-                interpretacion = 'Relacion Negativa (Inversa)'
-
+            if xi_cualitativa == True or yi_cualitativa == True:
+                interpretacion = 'variables cualitativas'
             else:
-                interpretacion = 'No hay relacion'
+                if resultado > 0:
+                    interpretacion = 'Relacion Positiva (Directa)'
+
+                elif resultado < 0:
+                    interpretacion = 'Relacion Negativa (Inversa)'
+
+                else:
+                    interpretacion = 'No hay relacion'
 
         if operacion == 'correlacion':
-            
-            if resultado >= 0.9 and resultado <= 1:
-                interpretacion = 'Correlacion Positiva/Directa Perfecta'
-            
-            elif resultado >= 0.5 and resultado < 0.9:
-                interpretacion = 'Correlacion Positiva/Directa Alta'
-            
-            elif resultado > 0 and resultado < 0.5:
-                interpretacion = 'Correlacion Positiva/Directa Baja'
-            
-            elif resultado == 0:
-                interpretacion = 'No existe Relacion Lineal, pudiera existir otro tipo de relacion, ejemplo: cuadratica' 
-            
-            elif resultado < 0 and resultado > -0.5:
-                interpretacion = 'Correlacion Negativa/Inversa Baja'   
+            if xi_cualitativa == True or yi_cualitativa == True:
+                interpretacion = 'variables cualitativas'
+            else:            
+                if resultado >= 0.9 and resultado <= 1:
+                    interpretacion = 'Correlacion Positiva/Directa Perfecta'
+                
+                elif resultado >= 0.5 and resultado < 0.9:
+                    interpretacion = 'Correlacion Positiva/Directa Alta'
+                
+                elif resultado > 0 and resultado < 0.5:
+                    interpretacion = 'Correlacion Positiva/Directa Baja'
+                
+                elif resultado == 0:
+                    interpretacion = 'No existe Relacion Lineal, pudiera existir otro tipo de relacion, ejemplo: cuadratica' 
+                
+                elif resultado < 0 and resultado > -0.5:
+                    interpretacion = 'Correlacion Negativa/Inversa Baja'   
 
-            elif resultado <= -0.5 and resultado > -0.9:
-                interptetacion = 'Correlacion Negativa/Inversa Alta'
+                elif resultado <= -0.5 and resultado > -0.9:
+                    interptetacion = 'Correlacion Negativa/Inversa Alta'
 
-            elif resultado <= -0.9 and resultado >= -1:
-                interpretacion = 'Correlacion Negativa/Inversa Perfecta'
+                elif resultado <= -0.9 and resultado >= -1:
+                    interpretacion = 'Correlacion Negativa/Inversa Perfecta'
 
-            else:
-                interpretacion = 'Correlacion erronea, solo pueden ser valores entre 1 y -1'
+                else:
+                    interpretacion = 'Correlacion erronea, solo pueden ser valores entre 1 y -1'
 
         if operacion == 'determinacion':
-            if resultado >= 0.8:
-                interpretacion = 'El modelo es muy representativo de la realidad'
-            elif resultado >= 0.5 and resultado < 0.8:
-                interpretacion = 'El modelo es medianamente representativo de la realidad'
-            elif resultado >= 0.3 and resultado < 0.5:
-                interpretacion = 'El modelo es bajamente representativo de la realidad'
-            elif resultado >= 0 and resultado < 0.3:
-                interpretacion = 'El modelo no es representativo de la realidad'
-            else:
-                interpretacion = 'Determinacion erronea, el resultado debe ser entre 0 y 1'
+            if xi_cualitativa == True or yi_cualitativa == True:
+                interpretacion = 'variables cualitativas'
+            else:            
+                if resultado >= 0.8:
+                    interpretacion = 'El modelo es muy representativo de la realidad'
+                elif resultado >= 0.5 and resultado < 0.8:
+                    interpretacion = 'El modelo es medianamente representativo de la realidad'
+                elif resultado >= 0.3 and resultado < 0.5:
+                    interpretacion = 'El modelo es bajamente representativo de la realidad'
+                elif resultado >= 0 and resultado < 0.3:
+                    interpretacion = 'El modelo no es representativo de la realidad'
+                else:
+                    interpretacion = 'Determinacion erronea, el resultado debe ser entre 0 y 1'
 
         return interpretacion
 
     @property
     def media(self):
 
-        if self.__es_cualitativa_xi__() == False:
-
+        if type(self) == AnalisisUnivariada:
             xi = self.__xi__
             ni = self.__fa__        
             total_n = self.__total_n__
-            
-            if self.__agrupados__ == False:
-                
-                media_xi = xi.mean()
 
-            else:
-                
-                #Si los datos estan agrupados por rangos
-                if type(self) == AnalisisUnivariada:
+            if self.__es_cualitativa_xi__() == False:
+
+                if self.__agrupados__ == False:
                     
+                    media_xi = xi.mean()
+
+                else:
+                    
+                    #Si los datos estan agrupados por rangos
                     if self.__mc__ is not None:
                         xi = self.__mc__
             
@@ -1486,77 +1520,77 @@ class Analisis(Backup, Display):
                     
                     media_xi = sumatoria_ni_xi / total_n
 
-        else:
-            media_xi = 'La media de Xi no es medible por ser una variable cualitativa'        
+            else:
+                media_xi = 'Xi es variable cualitativa'        
             
-        if type(self) == AnalisisUnivariada:
             return media_xi
         
         if type(self) == AnalisisBivariada:
-                if self.__es_cualitativa_yi__() == False:
-                
-                    yi = self.__yi__
+            
+            xi = self.analisis_xi.__xi__
+            ni_xi = self.analisis_xi.__fa__
+            total_n_xi = self.analisis_xi.__total_n__
+            yi = self.analisis_yi.__xi__
+            ni_yi = self.analisis_yi.__fa__
+            total_n_yi = self.analisis_yi.__total_n__
 
-                    if self.__agrupados__ == False:
-                        media_yi = yi.mean()
+            if self.__es_cualitativa_xi__() == False:
+
+                if self.analisis_xi.__agrupados__ == False:
                     
-                    else:
-
-                        sumatoria_ni_yi = (ni* yi).sum()
-
-                        media_yi = sumatoria_ni_yi / total_n
+                    media_xi = xi.mean()
 
                 else:
-                    media_yi = 'La media de Yi no es medible por ser una variable cualitativa'
-
-                return media_xi, media_yi
-        
-
-    @property
-    def varianza(self):
-
-        
-        muestra = self.__muestra__
-        
-        xi =            self.tabla_estadistica[self.__nombre_columna_xi__]
-        
-        n =             self.__total_n__
-        media =         self.media
-
-
-        if type(self) == AnalisisBivariada:
-            media_xi =  media[0]
-            media_yi =  media[1]
-            yi =        self.tabla_estadistica[self.__nombre_columna_yi__]
+                    
+                    #Si los datos estan agrupados por rangos
+                    if self.analisis_xi.__mc__ is not None:
+                        xi = self.analisis_xi.__mc__
             
-            if self.__agrupados__ == True:
-                #raise ValueError('Aun no se crea la formula para varianza para datos agrupados para AnalisisBivariada.')
-                nixi2 = self.tabla_estadistica[self.__nombres_columnas_estadisticas__['xi2*ni']]
-                niyi2 = self.tabla_estadistica[self.__nombres_columnas_estadisticas__['yi2*ni']]
-
-                varianza_xi = ((nixi2.sum() / n) - (media_xi ** 2))
-                varianza_yi = ((niyi2.sum() / n) - (media_yi ** 2))
+                    sumatoria_ni_xi = (ni_xi * xi).sum()
+                    
+                    media_xi = sumatoria_ni_xi / total_n_xi
 
             else:
-                if muestra == True:
-                    varianza_xi = variance(xi)
-                    varianza_yi = variance(yi)
+                
+                media_xi = 'Xi es variable cualitativa'        
+            
+            if self.__es_cualitativa_yi__() == False:
+
+                if self.analisis_yi.__agrupados__ == False:
+                    media_yi = yi.mean()
+                
                 else:
-                    varianza_xi = pvariance(xi)
-                    varianza_yi = pvariance(yi)
+                    #Si los datos estan agrupados por rangos
+                    if self.analisis_yi.__mc__ is not None:
+                        yi = self.analisis_yi.__mc__
 
-            return varianza_xi, varianza_yi
+                    sumatoria_ni_yi = (ni_yi* yi).sum()
 
-        else:            
+                    media_yi = sumatoria_ni_yi / total_n_yi
+
+            else:
+                media_yi = 'Yi es variable cualitativa'
+
+            return media_xi, media_yi
+        
+    @property
+    def varianza(self):
+        
+        
+        muestra =       self.__muestra__
+        xi =            self.tabla_estadistica[self.__nombre_columna_xi__]
+        n =             self.__total_n__
+        media =         self.media
+        
+        if type(self) == AnalisisUnivariada:
+            
             if self.__es_cualitativa_xi__() == False:
 
                 if self.__agrupados__ == True:
 
-                    
                     nixi2 =     self.tabla_estadistica[self.__nombres_columnas_estadisticas__['xi2*ni']]
                     varianza_xi =  ((nixi2.sum() / n) - (media ** 2))
                     
-
                 else:
                     if muestra == True:
                         varianza_xi = variance(xi)
@@ -1564,20 +1598,67 @@ class Analisis(Backup, Display):
                         varianza_xi = pvariance(xi)
             
             else:
-                varianza_xi = 'La varianza de Xi no es medible por ser variable cualitativa'
+                varianza_xi = 'Xi es variable cualitativa'
 
             return varianza_xi
+
+        if type(self) == AnalisisBivariada:
+
+            media_xi =  media[0]
+            media_yi =  media[1]
+            yi =        self.tabla_estadistica[self.__nombre_columna_yi__]
+            
+            if self.__es_cualitativa_xi__() == True:
+                varianza_xi = 'Xi es variable cualitativa'
+
+            else:
+                if self.__agrupados__ == True:
+                    nixi2 = self.tabla_estadistica[self.__nombres_columnas_estadisticas__['xi2*ni']]
+                    varianza_xi = ((nixi2.sum() / n) - (media_xi ** 2))
+                else:
+                    if muestra == True:
+                        varianza_xi = variance(xi)
+                    
+                    else:
+                        varianza_xi = pvariance(xi)
+
+            if self.__es_cualitativa_yi__() == True:
+                varianza_yi = 'Yi es variable cualitativa'
+
+            else:
+                if self.__agrupados__ == True: 
+                    niyi2 = self.tabla_estadistica[self.__nombres_columnas_estadisticas__['yi2*ni']]
+                    varianza_yi = ((niyi2.sum() / n) - (media_yi ** 2))
+
+                else:
+                    if muestra == True:
+                        varianza_yi = variance(yi)
+                    else:
+                        varianza_yi = pvariance(yi)
+
+            return varianza_xi, varianza_yi
 
     @property
     def desviacion_estandar(self):
         if type(self) == AnalisisBivariada:
-            stdev_xi = self.varianza[0] ** .5
-            stdev_yi = self.varianza[1] ** .5
+            if self.__es_cualitativa_xi__() == False:
+                stdev_xi = self.varianza[0] ** .5
+            
+            else:
+                stdev_xi = 'Xi es variable cualitativa'
+            if self.__es_cualitativa_yi__() == False:
+                stdev_yi = self.varianza[1] ** .5
+            else:
 
+                stdev_yi = 'Yi es variable cualitativa'
             return stdev_xi, stdev_yi
         
         else:
-            stdev_xi = self.varianza ** .5
+            if self.__es_cualitativa_xi__() == False:
+                stdev_xi = self.varianza ** .5
+
+            else:
+                stdev_xi = 'Xi es variable cualitativa'
 
             return stdev_xi
 
@@ -2456,47 +2537,57 @@ class AnalisisBivariada(Analisis, TablaPivote):
 
     @property
     def covarianza(self):
-        n =          self.__total_n__
-
-        if self.__agrupados__ == False:
-            xi =         self.tabla_estadistica[self.__nombre_columna_xi__]
-            yi =         self.tabla_estadistica[self.__nombre_columna_yi__]
-            xiyi =       self.tabla_estadistica[self.__nombres_columnas_estadisticas__['xiyi']]
-            
-
-            media_xi =  self.media[0]
-            media_yi =  self.media[1]
-
-            suma_xiyi = xiyi.sum()
-        
+        if self.__es_cualitativa_xi__() == True or self.__es_cualitativa_yi__() == True:
+            covarianza = 'Variables cualitativas'
         else:
+            n =          self.__total_n__
 
-            xi_yi_ni =      self.tabla_estadistica[self.__nombres_columnas_estadisticas__['xi*yi*ni']]
+            if self.__agrupados__ == False:
+                xi =         self.tabla_estadistica[self.__nombre_columna_xi__]
+                yi =         self.tabla_estadistica[self.__nombre_columna_yi__]
+                xiyi =       self.tabla_estadistica[self.__nombres_columnas_estadisticas__['xiyi']]
+                
 
-            suma_xiyi =    xi_yi_ni.sum()
-            media_xi = self.media[0]
-            media_yi = self.media[1]
+                media_xi =  self.media[0]
+                media_yi =  self.media[1]
 
-        covarianza = (suma_xiyi / n) - (media_xi * media_yi)
+                suma_xiyi = xiyi.sum()
+            
+            else:
+
+                xi_yi_ni =      self.tabla_estadistica[self.__nombres_columnas_estadisticas__['xi*yi*ni']]
+
+                suma_xiyi =    xi_yi_ni.sum()
+                media_xi = self.media[0]
+                media_yi = self.media[1]
+
+            covarianza = (suma_xiyi / n) - (media_xi * media_yi)
 
         return covarianza
     
     @property
     def correlacion(self):
+        if self.__es_cualitativa_xi__() == True or self.__es_cualitativa_yi__() == True:
+            correlacion = 'Variables cualitativas'
         
-        covarianza = self.covarianza
-        stdev_xi = self.desviacion_estandar[0]
-        stdev_yi = self.desviacion_estandar[1]
+        else:
+            covarianza = self.covarianza
+            stdev_xi = self.desviacion_estandar[0]
+            stdev_yi = self.desviacion_estandar[1]
 
-        correlacion = covarianza / (stdev_xi * stdev_yi)
+            correlacion = covarianza / (stdev_xi * stdev_yi)
 
         return correlacion
 
     @property
     def determinacion(self):
-        correlacion = self.correlacion
+        if self.__es_cualitativa_xi__() == True or self.__es_cualitativa_yi__() == True:
+            determinacion = 'Variables cualitativas'
+        
+        else:
+            correlacion = self.correlacion
 
-        determinacion = correlacion **2
+            determinacion = correlacion **2
 
         return determinacion
 
