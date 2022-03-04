@@ -1,9 +1,12 @@
 'Estoy en branch bivariada'
 import sys
+import numpy
 sys.path.append('C:\\Users\\gilbe\\github\\formulas_personales\\datos_estadisticos\\')
 sys.path.append('C:\\Users\\gilbe\\github\\formulas_personales\\')
 import pandas
 import copy
+import matplotlib.pyplot as plt
+from matplotlib.ticker import PercentFormatter
 from IPython.core.display import display, HTML
 from statistics import variance, mode, multimode, quantiles, pvariance
 from formulas_especiales import ceiling_to_a_number, floor_to_a_number
@@ -30,6 +33,9 @@ class Backup:
             # Solo si es AnalisisBivariada
             else:
                 self.__datos_backup__ = copy.copy(self.datos.datos)
+
+        if type(self) == AnalisisUnivariada or type(self) == AnalisisBivariada:
+            self.__tabla_estadistica_backup__ = copy.copy(self.tabla_estadistica)
 
         # Si es Univariada y Bivariada
         self.__columna_xi_backup__ = copy.copy(self.__columna_xi__)
@@ -63,6 +69,9 @@ class Backup:
             else:
                 self.datos.datos = self.__datos_backup__
                 self.tabla_estadistica = self.__datos_backup__
+
+        if type(self) == AnalisisUnivariada or type(self) == AnalisisBivariada:
+            self.tabla_estadistica = self.__tabla_estadistica_backup__
 
         # Si es Univariada y Bivariada
         self.__columna_xi__ = self.__columna_xi_backup__
@@ -540,8 +549,75 @@ class Display:
             <pre>determinacion:        <strong><span style="font-size:90%">{determinacion} ({interpretacion_determinacion})</span></strong></br></pre>
             '''))
 
+class Charts:
 
-class DatosEstadisticos(Backup, Display):
+    def __estilo_graficas__(self):
+        plt.style.use('fivethirtyeight')
+
+    def pareto(self, x_grid, y_grid, title, datos=None):
+        '''
+        Grafica de pareto.
+        df_: DataFrame
+        x_grid: columna para datos en x
+        column: columna para datos en y
+        
+        '''
+        
+        if isinstance(datos, pandas.DataFrame) == True:
+            dataframe = datos
+
+        elif type(self) == AnalisisBivariada:
+            dataframe = self.tabla_estadistica
+
+        elif type(self) == AnalisisUnivariada:
+            dataframe = self.datos.datos
+
+        else:
+            dataframe = self.datos
+
+        if x_grid == 'index':
+            df = dataframe.reset_index()
+            x_grid = 0
+
+        df = dataframe.groupby(x_grid)[y_grid].sum().reset_index()
+        df = df.sort_values(by=y_grid,ascending=False)
+
+        df["cumpercentage"] = df[y_grid].cumsum()/df[y_grid].sum()*100
+
+
+        fig, ax = plt.subplots(figsize=(20,5))
+        ax.bar(df[x_grid], df[y_grid], color="C0")
+        ax2 = ax.twinx()
+        ax2.plot(df[x_grid], df["cumpercentage"], color="C1", marker="D", ms=7)
+        ax2.yaxis.set_major_formatter(PercentFormatter())
+
+        ax.tick_params(axis="y", colors="C0")
+        ax2.tick_params(axis="y", colors="C1")
+        
+        for tick in ax.get_xticklabels():
+            tick.set_rotation(45)
+        fig.suptitle(title)
+        plt.show()
+
+class Probabilidad:
+
+    def __init__(self) -> None:
+        pass
+
+    def probabilidad_apriori(self,casos_favorables, casos_posibles):
+        probabilidad = casos_favorables / casos_posibles
+
+        return probabilidad
+    
+    def probabilidad_aposteriori(self, casos_favorables_b, casos_favorables_anb):
+
+        probabilidad_aposteriori = casos_favorables_anb / casos_favorables_b
+
+        return probabilidad_aposteriori
+
+
+
+class DatosEstadisticos(Backup, Display, Charts):
     def __init__(self, datos, titulo, repr_xi, repr_fa, agrupados, columna_xi, columna_fa, xi_es_index, muestra):
         self.datos = datos
         self.__titulo__ = titulo
@@ -552,6 +628,8 @@ class DatosEstadisticos(Backup, Display):
         self.__columna_fa__ = columna_fa
         self.__xi_es_index__ = xi_es_index
         self.__muestra__ = muestra
+
+        self.__estilo_graficas__()
 
     def __reubicar_columna_fa__(self):
         
@@ -578,7 +656,6 @@ class DatosEstadisticos(Backup, Display):
 
             self.datos.reset_index(drop=True, inplace=True)
 
-            #self.__agrupados__ = True
             self.__yi_en_columnas__ = False
             self.__columna_fa__ = self.__repr_fa__
 
@@ -726,12 +803,15 @@ class DatosEstadisticos(Backup, Display):
             return total_n
 
     def __crear_DatosUnivariada_variables__(self):
-        self.__du_xi__ = DatosUnivariada(datos=self.__xi__, titulo=self.__titulo__, repr_xi=self.__repr_xi__, repr_fa=self.__repr_fa__)
-        self.__du_yi__ = DatosUnivariada(datos=self.__yi__, titulo=self.__titulo__, repr_xi=self.__repr_yi__, repr_fa=self.__repr_fa__)
+        xi = self.__xi__.copy()
+        yi = self.__yi__.copy()
+        self.__du_xi__ = DatosUnivariada(datos=xi, titulo=self.__titulo__, repr_xi=self.__repr_xi__, repr_fa=self.__repr_fa__)
+        self.__du_yi__ = DatosUnivariada(datos=yi, titulo=self.__titulo__, repr_xi=self.__repr_yi__, repr_fa=self.__repr_fa__)
         self.__du_xi__.agrupar()
         self.__du_yi__.agrupar()
         self.__du_xi__.datos.reset_index(inplace=True)
         self.__du_yi__.datos.reset_index(inplace=True)
+        
 
 class DatosUnivariada(DatosEstadisticos):
 
@@ -740,15 +820,10 @@ class DatosUnivariada(DatosEstadisticos):
         super().__init__(datos, titulo, repr_xi, repr_fa, agrupados, columna_xi, columna_fa, xi_es_index, muestra)
 
         self.__dar_formato_datos__()
-
         self.__quitar_indices__()
-        
         self.__obtener_nombre_columnas__()
-
         self.__obtener_xi_yi_fa__()
-
         self.__ordenar_datos__()
-
         self.__total_n__ = self.__total_n__()
                 
     def __creacion_intervalos__(self, rango_intervalos):
@@ -988,9 +1063,7 @@ class DatosBivariada(DatosEstadisticos, TablaPivote):
         self.__obtener_nombre_columnas__()
         self.__obtener_xi_yi_fa__()
         self.__ordenar_datos__()
-
         self.__total_n__ = self.__total_n__()
-
         self.__crear_DatosUnivariada_variables__()
 
     def agrupar(self):
@@ -1137,11 +1210,13 @@ class DatosBivariada(DatosEstadisticos, TablaPivote):
 
 
 
-class Analisis(Backup, Display):
+class Analisis(Backup, Display, Charts):
 
     def __init__(self, datos):
         
         self.datos = datos
+        
+        self.__estilo_graficas__()
 
     def __copiar_backup__(self,datos):
 
@@ -1206,6 +1281,119 @@ class Analisis(Backup, Display):
             else:
                 raise ValueError('Type no reconocido')      
 
+    def __es_rango__(self):
+        
+        if type(self) == AnalisisUnivariada:
+            xi = self.__xi__
+            
+            try:
+                es_rango = True if (type(xi.iloc[0]) is list or type(xi.iloc[0]) is tuple) else False
+                
+            except:
+                es_rango = True if (type(xi[0]) is list or type(xi[0]) is tuple) else False
+
+            return es_rango
+
+        if type(self) == AnalisisBivariada:
+            xi = self.__xi__
+            yi = self.__yi__
+            
+            try:
+                es_rango_xi = True if (type(xi.iloc[0]) is list or type(xi.iloc[0]) is tuple) else False
+                
+            except:
+                es_rango_xi = True if (type(xi[0]) is list or type(xi[0]) is tuple) else False
+
+            try:
+                es_rango_yi = True if (type(yi.iloc[0]) is list or type(yi.iloc[0]) is tuple) else False
+                
+            except:
+                es_rango_yi = True if (type(yi[0]) is list or type(yi[0]) is tuple) else False            
+
+            return es_rango_xi, es_rango_yi
+
+    def __marca_clase__(self, rango):
+        '''
+        Funcion:
+            Calcula la marca de clase de un rango
+        
+        Input:
+            recibe lista o tupla de "dos" valores.
+            
+            ejemplo: [1, 2] o (1, 2)
+        
+        Output:
+            marca_clase
+            
+        '''
+        
+        if len(rango) ==2:
+            
+            marca_clase = (rango[0] + rango[1]) / 2
+            
+            return marca_clase
+        
+        else:
+            raise ValueError('Solo se aceptan dos valores como rango!')
+
+    def __calculo_marcas_clase__(self):
+        '''
+        Funcion:
+            Calcula las marcas de clase cuando los datos estan agrupados por intervalos
+        '''
+        if type(self) == AnalisisUnivariada:
+            xi = self.tabla_estadistica[self.__nombre_columna_xi__]
+            #xi = self.__xi__
+            es_rango = self.__es_rango__()
+            
+            if es_rango:
+                
+                self.tabla_estadistica[self.__nombres_columnas_estadisticas__['mc']] = xi
+                
+                self.tabla_estadistica[self.__nombres_columnas_estadisticas__['mc']] = self.tabla_estadistica[self.__nombres_columnas_estadisticas__['mc']].apply(self.__marca_clase__)
+
+                marcas_de_clase = self.tabla_estadistica[self.__nombres_columnas_estadisticas__['mc']]
+
+            else:
+                marcas_de_clase = None
+            
+            return marcas_de_clase
+        
+        if type(self) == AnalisisBivariada:
+            xi = self.tabla_estadistica[self.__nombre_columna_xi__]
+            #xi = self.__xi__
+            yi = self.tabla_estadistica[self.__nombre_columna_yi__]
+            #yi = self.__yi__
+            
+            es_rango_xi = self.analisis_xi.__es_rango__()
+            es_rango_yi = self.analisis_yi.__es_rango__()
+    
+            
+            if es_rango_xi:
+                
+                self.tabla_estadistica[self.__nombres_columnas_estadisticas__['mc_xi']] = xi
+                
+                self.tabla_estadistica[self.__nombres_columnas_estadisticas__['mc_xi']] = self.tabla_estadistica[self.__nombres_columnas_estadisticas__['mc_xi']].apply(self.__marca_clase__)
+
+                marcas_de_clase_xi = self.tabla_estadistica[self.__nombres_columnas_estadisticas__['mc_xi']]
+
+            else:
+                marcas_de_clase_xi = None
+            
+            if es_rango_yi:
+                
+                self.tabla_estadistica[self.__nombres_columnas_estadisticas__['mc_yi']] = yi
+                
+                self.tabla_estadistica[self.__nombres_columnas_estadisticas__['mc_yi']] = self.tabla_estadistica[self.__nombres_columnas_estadisticas__['mc_yi']].apply(self.__marca_clase__)
+
+                marcas_de_clase_yi = self.tabla_estadistica[self.__nombres_columnas_estadisticas__['mc_yi']]
+
+            else:
+                marcas_de_clase_yi = None
+
+            
+            return marcas_de_clase_xi, marcas_de_clase_yi
+
     def __crear_tabla_estadistica__(self):
 
         '''Crea tabla estadistica sin Xi en index'''
@@ -1215,7 +1403,9 @@ class Analisis(Backup, Display):
 
     def __establecer_nombres_columnas_estadisticas__(self):
         self.__nombres_columnas_estadisticas__ = {
-                        'mc': 'MC', 
+                        'mc': 'MC',
+                        'mc_xi': 'MC Xi',
+                        'mc_yi': 'MC Yi', 
                         'faa': 'FAA', 
                         'fr': 'FR', 
                         'fra': 'FRA', 
@@ -1257,12 +1447,11 @@ class Analisis(Backup, Display):
         return es_cualitativa
 
     def __creacion_columnas_estadisticas__(self):
-            
-        fa = self.__fa__
-        total_n = self.__total_n__
-        cualitativa_xi = self.__es_cualitativa_xi__()
-
+        
         if type(self) == AnalisisUnivariada:
+            fa = self.tabla_estadistica[self.__nombre_columna_fa__]
+            total_n = self.__total_n__
+            cualitativa_xi = self.__es_cualitativa_xi__()
             
             # Si NO es cualitativa
             if cualitativa_xi == False:
@@ -1287,6 +1476,7 @@ class Analisis(Backup, Display):
 
                 # Columnas para datos agrupados
                 else:
+                    
                     faa =                   self.tabla_estadistica[self.__nombres_columnas_estadisticas__['faa']] = fa.cumsum()
                     fr =                    self.tabla_estadistica[self.__nombres_columnas_estadisticas__['fr']] = fa / total_n
                     fra =                   self.tabla_estadistica[self.__nombres_columnas_estadisticas__['fra']] = fr.cumsum()
@@ -1364,12 +1554,27 @@ class Analisis(Backup, Display):
                 self.__xi_menos_media4_por_ni__ = xi_menos_media_por_ni_exp_4                
 
         elif type(self) == AnalisisBivariada:
-            xi =         self.tabla_estadistica[self.__nombre_columna_xi__]
-            yi =         self.tabla_estadistica[self.__nombre_columna_yi__]
+            fa = self.tabla_estadistica[self.__nombre_columna_fa__]
+            #fa = self.__fa__
+            total_n = self.__total_n__
+            cualitativa_xi = self.__es_cualitativa_xi__()
+            cualitativa_yi = self.__es_cualitativa_yi__()
             
             # el Try es por si los datos de xi y yi no son numericos
-            try:
+            if cualitativa_xi == True or cualitativa_yi == True:
+                print('No se pudieron calcular algunas columnas estadisticas por que xi o yi son variables cualitativas')
+            
+            else:
                 
+                self.__mc__ = self.__calculo_marcas_clase__()
+                
+                es_rango_xi =   self.analisis_xi.__es_rango__()
+                es_rango_yi =   self.analisis_yi.__es_rango__()
+
+                xi =            self.tabla_estadistica[self.__nombre_columna_xi__] if es_rango_xi == False else self.tabla_estadistica[self.__nombres_columnas_estadisticas__['mc_xi']]
+                yi =            self.tabla_estadistica[self.__nombre_columna_yi__] if es_rango_yi == False else self.tabla_estadistica[self.__nombres_columnas_estadisticas__['mc_yi']]
+        
+
                 xi2 =           self.tabla_estadistica[self.__nombres_columnas_estadisticas__['xi2']] = xi ** 2
                 yi2 =           self.tabla_estadistica[self.__nombres_columnas_estadisticas__['yi2']] = yi ** 2
                 xiyi =          self.tabla_estadistica[self.__nombres_columnas_estadisticas__['xiyi']] = xi * yi
@@ -1385,15 +1590,7 @@ class Analisis(Backup, Display):
                     yi_ni2 =        self.tabla_estadistica[self.__nombres_columnas_estadisticas__['yi2*ni']]    = yi2 * fa
                     
                     xi_yi_ni =      self.tabla_estadistica[self.__nombres_columnas_estadisticas__['xi*yi*ni']]  = xi * yi * fa
-                    
-
-
-
-
-            except:
-                print('No se pudieron calcular columnas de frecuencias por contener datos no numericos')
-                pass
-        
+                      
         else:
             raise ValueError('El type recibido no es DatosUnivariada ni DatosBivariada, revisar')
 
@@ -1471,7 +1668,7 @@ class Analisis(Backup, Display):
                     interpretacion = 'Correlacion Negativa/Inversa Baja'   
 
                 elif resultado <= -0.5 and resultado > -0.9:
-                    interptetacion = 'Correlacion Negativa/Inversa Alta'
+                    interpretacion = 'Correlacion Negativa/Inversa Alta'
 
                 elif resultado <= -0.9 and resultado >= -1:
                     interpretacion = 'Correlacion Negativa/Inversa Perfecta'
@@ -1500,8 +1697,9 @@ class Analisis(Backup, Display):
     def media(self):
 
         if type(self) == AnalisisUnivariada:
-            xi = self.__xi__
-            ni = self.__fa__        
+            
+            xi = self.tabla_estadistica[self.__nombre_columna_xi__]
+            ni = self.tabla_estadistica[self.__nombre_columna_fa__]      
             total_n = self.__total_n__
 
             if self.__es_cualitativa_xi__() == False:
@@ -1515,9 +1713,8 @@ class Analisis(Backup, Display):
                     #Si los datos estan agrupados por rangos
                     if self.__mc__ is not None:
                         xi = self.__mc__
-            
-                    sumatoria_ni_xi = (ni * xi).sum()
                     
+                    sumatoria_ni_xi = (ni * xi).sum()
                     media_xi = sumatoria_ni_xi / total_n
 
             else:
@@ -1527,11 +1724,11 @@ class Analisis(Backup, Display):
         
         if type(self) == AnalisisBivariada:
             
-            xi = self.analisis_xi.__xi__
-            ni_xi = self.analisis_xi.__fa__
+            xi = self.analisis_xi.tabla_estadistica[self.analisis_xi.__nombre_columna_xi__]
+            ni_xi = self.analisis_xi.tabla_estadistica[self.analisis_xi.__nombre_columna_fa__]
             total_n_xi = self.analisis_xi.__total_n__
-            yi = self.analisis_yi.__xi__
-            ni_yi = self.analisis_yi.__fa__
+            yi = self.analisis_yi.tabla_estadistica[self.analisis_yi.__nombre_columna_xi__]
+            ni_yi = self.analisis_yi.tabla_estadistica[self.analisis_yi.__nombre_columna_fa__]
             total_n_yi = self.analisis_yi.__total_n__
 
             if self.__es_cualitativa_xi__() == False:
@@ -1576,13 +1773,13 @@ class Analisis(Backup, Display):
     @property
     def varianza(self):
         
-        
-        muestra =       self.__muestra__
-        xi =            self.tabla_estadistica[self.__nombre_columna_xi__]
-        n =             self.__total_n__
-        media =         self.media
-        
         if type(self) == AnalisisUnivariada:
+        
+            muestra =       self.__muestra__
+            xi =            self.tabla_estadistica[self.__nombre_columna_xi__]
+            n =             self.__total_n__
+            media =         self.media
+        
             
             if self.__es_cualitativa_xi__() == False:
 
@@ -1603,20 +1800,28 @@ class Analisis(Backup, Display):
             return varianza_xi
 
         if type(self) == AnalisisBivariada:
-
-            media_xi =  media[0]
-            media_yi =  media[1]
-            yi =        self.tabla_estadistica[self.__nombre_columna_yi__]
+            
+            muestra_xi =        self.analisis_xi.__muestra__
+            muestra_yi =        self.analisis_yi.__muestra__
+            xi =                self.analisis_xi.__xi__
+            yi =                self.analisis_yi.__xi__
+            n_xi =              self.analisis_xi.__total_n__
+            n_yi =              self.analisis_yi.__total_n__
+            media =         self.media
+            media_xi =  self.media[0]
+            media_yi =  self.media[1]
+            
             
             if self.__es_cualitativa_xi__() == True:
                 varianza_xi = 'Xi es variable cualitativa'
 
             else:
-                if self.__agrupados__ == True:
-                    nixi2 = self.tabla_estadistica[self.__nombres_columnas_estadisticas__['xi2*ni']]
-                    varianza_xi = ((nixi2.sum() / n) - (media_xi ** 2))
+                if self.analisis_xi.__agrupados__ == True:
+
+                    nixi2 = self.analisis_xi.tabla_estadistica[self.__nombres_columnas_estadisticas__['xi2*ni']]
+                    varianza_xi = ((nixi2.sum() / n_xi) - (media_xi ** 2))
                 else:
-                    if muestra == True:
+                    if muestra_xi == True:
                         varianza_xi = variance(xi)
                     
                     else:
@@ -1626,12 +1831,12 @@ class Analisis(Backup, Display):
                 varianza_yi = 'Yi es variable cualitativa'
 
             else:
-                if self.__agrupados__ == True: 
-                    niyi2 = self.tabla_estadistica[self.__nombres_columnas_estadisticas__['yi2*ni']]
-                    varianza_yi = ((niyi2.sum() / n) - (media_yi ** 2))
+                if self.analisis_yi.__agrupados__ == True: 
+                    niyi2 = self.analisis_yi.tabla_estadistica[self.__nombres_columnas_estadisticas__['xi2*ni']]
+                    varianza_yi = ((niyi2.sum() / n_yi) - (media_yi ** 2))
 
                 else:
-                    if muestra == True:
+                    if muestra_yi == True:
                         varianza_yi = variance(yi)
                     else:
                         varianza_yi = pvariance(yi)
@@ -1642,12 +1847,13 @@ class Analisis(Backup, Display):
     def desviacion_estandar(self):
         if type(self) == AnalisisBivariada:
             if self.__es_cualitativa_xi__() == False:
-                stdev_xi = self.varianza[0] ** .5
+                
+                stdev_xi = abs(self.varianza[0]) ** .5
             
             else:
                 stdev_xi = 'Xi es variable cualitativa'
             if self.__es_cualitativa_yi__() == False:
-                stdev_yi = self.varianza[1] ** .5
+                stdev_yi = abs(self.varianza[1]) ** .5
             else:
 
                 stdev_yi = 'Yi es variable cualitativa'
@@ -1655,7 +1861,7 @@ class Analisis(Backup, Display):
         
         else:
             if self.__es_cualitativa_xi__() == False:
-                stdev_xi = self.varianza ** .5
+                stdev_xi = abs(self.varianza) ** .5
 
             else:
                 stdev_xi = 'Xi es variable cualitativa'
@@ -1839,66 +2045,7 @@ class AnalisisUnivariada(Analisis):
             tabla_intervalos_frecuencias = pandas.concat([intervalos, frecuencias_series], axis=1)
 
         return tabla_intervalos_frecuencias
-
-    def __es_rango__(self):
-        
-        xi = self.__xi__
-        
-        try:
-            es_rango = True if (type(xi.iloc[0]) is list or type(xi.iloc[0]) is tuple) else False
-            
-        except:
-            es_rango = True if (type(xi[0]) is list or type(xi[0]) is tuple) else False
-
-        return es_rango
     
-    def __marca_clase__(self, rango):
-        '''
-        Funcion:
-            Calcula la marca de clase de un rango
-        
-        Input:
-            recibe lista o tupla de "dos" valores.
-            
-            ejemplo: [1, 2] o (1, 2)
-        
-        Output:
-            marca_clase
-            
-        '''
-        
-        if len(rango) ==2:
-            
-            marca_clase = (rango[0] + rango[1]) / 2
-            
-            return marca_clase
-        
-        else:
-            raise ValueError('Solo se aceptan dos valores como rango!')
-
-    def __calculo_marcas_clase__(self):
-        '''
-        Funcion:
-            Calcula las marcas de clase cuando los datos estan agrupados por intervalos
-        '''
-
-        xi = self.__xi__
-        
-        es_rango = self.__es_rango__()
-        
-        if es_rango:
-            
-            self.tabla_estadistica[self.__nombres_columnas_estadisticas__['mc']] = xi
-            
-            self.tabla_estadistica[self.__nombres_columnas_estadisticas__['mc']] = self.tabla_estadistica[self.__nombres_columnas_estadisticas__['mc']].apply(self.__marca_clase__)
-
-            marcas_de_clase = self.tabla_estadistica[self.__nombres_columnas_estadisticas__['mc']]
-
-        else:
-            marcas_de_clase = None
-        
-        return marcas_de_clase
-
     def __encontrar_index_mediana_datos_agrupados__(self):
         
         mitad_faa = self.__total_n__ / 2
@@ -2517,7 +2664,6 @@ class AnalisisUnivariada(Analisis):
         
         display = self.__repr_analisis_univariada__()
         return display
-        
 
 class AnalisisBivariada(Analisis, TablaPivote):
 
@@ -2527,13 +2673,14 @@ class AnalisisBivariada(Analisis, TablaPivote):
 
         self.__copiar_parametros__(datos)
         
+        self.__analisis_univariada_variables__()
+
         self.__crear_tabla_estadistica__()
 
         self.__establecer_nombres_columnas_estadisticas__()
 
         self.__creacion_columnas_estadisticas__()
 
-        self.__analisis_univariada_variables__()
 
     @property
     def covarianza(self):
@@ -2543,6 +2690,7 @@ class AnalisisBivariada(Analisis, TablaPivote):
             n =          self.__total_n__
 
             if self.__agrupados__ == False:
+                
                 xi =         self.tabla_estadistica[self.__nombre_columna_xi__]
                 yi =         self.tabla_estadistica[self.__nombre_columna_yi__]
                 xiyi =       self.tabla_estadistica[self.__nombres_columnas_estadisticas__['xiyi']]
@@ -2554,7 +2702,7 @@ class AnalisisBivariada(Analisis, TablaPivote):
                 suma_xiyi = xiyi.sum()
             
             else:
-
+                
                 xi_yi_ni =      self.tabla_estadistica[self.__nombres_columnas_estadisticas__['xi*yi*ni']]
 
                 suma_xiyi =    xi_yi_ni.sum()
@@ -2644,7 +2792,6 @@ class AnalisisBivariada(Analisis, TablaPivote):
         media_yi =      self.media[1]
         varianza_x =    self.varianza[0]
         covarianza =    self.covarianza
-
 
         y = ((covarianza/varianza_x) * x) -((covarianza/varianza_x) * media_xi) + media_yi
 

@@ -133,7 +133,7 @@ def mediana(datos, agrupados=False, columna=0):
             tamano_intervalo_clase_mediana = ls_clase_mediana - li_clase_mediana
             
             mediana = li_clase_mediana + (((mitad_faa - faa_clase_anterior_mediana) / fa_clase_mediana) * tamano_intervalo_clase_mediana)
-            print(f'mediana {mediana} = Li: {li_clase_mediana} + (((total n: {mitad_faa}/2 - faa intervalo mediana anterior: {faa_clase_anterior_mediana}) / ni: {fa_clase_mediana}) * ti: {tamano_intervalo_clase_mediana}')
+            
 
         else:
             lista_xi_ordenada = Metodo_binario(
@@ -404,7 +404,7 @@ def desviacion_estandar(datos, agrupados=False, columna=0, muestra=False):
     return desviacion_estandar
 
 
-def coeficiente_variacion(datos, columna=0, agrupados=False):
+def coeficiente_variacion(datos=None, columna=0, agrupados=False, s=None, media_datos=None):
     '''
     Porcentaje de la desviacion estandar frente a la media.
 
@@ -430,18 +430,24 @@ def coeficiente_variacion(datos, columna=0, agrupados=False):
             la ***media "no" es representativa*** del conjunto de datos.
 
     '''
-    if agrupados == True:
+     
+    if isinstance(datos, pandas.DataFrame) == False:
+        if datos == None:
+            cv = s / media_datos
 
-        s = desviacion_estandar(datos, columna=columna, agrupados=True)
-        media_datos = media(datos, columna=columna, agrupados=True)
-    
     else:
+        if agrupados == True:
 
-        s = desviacion_estandar(datos, columna=columna)
-        media_datos = media(datos, columna=columna)
+            s = desviacion_estandar(datos, columna=columna, agrupados=True)
+            media_datos = media(datos, columna=columna, agrupados=True)
+        
+        else:
 
-    cv = s / media_datos
+            s = desviacion_estandar(datos, columna=columna)
+            media_datos = media(datos, columna=columna)
 
+        cv = s / media_datos
+    
     return cv
 
 
@@ -818,6 +824,11 @@ def covarianza(datos, agrupados=False, index_name=None, column_name=None, correl
     if correlacion == True:
         return (covarianza, stdev_xi, stdev_yi)
 
+
+def correlacion(covarianza, stdev_x, stdev_y):
+    correlacion = covarianza /(stdev_x * stdev_y)
+
+    return correlacion
 
 # FORMULAS PARA GRAFICAR
 class Diagrama_caja_bigotes:
